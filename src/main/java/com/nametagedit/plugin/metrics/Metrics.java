@@ -212,8 +212,8 @@ public class Metrics {
     public JsonObject getPluginData() {
         final JsonObject data = new JsonObject();
 
-        final String pluginName = this.plugin.getDescription().getName();
-        final String pluginVersion = this.plugin.getDescription().getVersion();
+        final String pluginName = this.plugin.getPluginMeta().getName();
+        final String pluginVersion = this.plugin.getPluginMeta().getVersion();
 
         data.addProperty("pluginName", pluginName); // Append the name of the plugin
         data.addProperty("pluginVersion", pluginVersion); // Append the version of the plugin

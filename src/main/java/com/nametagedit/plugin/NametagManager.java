@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
@@ -67,18 +66,17 @@ public class NametagManager {
             this.cache(adding.getName(), joining);
         } else {
 
-            Optional<OfflinePlayer> offlinePlayer = Optional.ofNullable(Arrays.stream(Bukkit.getOfflinePlayers())
-                    .filter(offlinePlayerFromBukkitCache -> player.equals(offlinePlayerFromBukkitCache.getName())).findFirst()
-                    .orElse(null));
-            if (offlinePlayer.isPresent() == false) {
-                offlinePlayer = Optional.ofNullable(Bukkit.getOfflinePlayer(player));
+            OfflinePlayer offlinePlayer = Arrays.stream(Bukkit.getOfflinePlayers())
+                    .filter(offlinePlayerFromBukkitCache -> player.equals(offlinePlayerFromBukkitCache.getName())).findFirst().orElse(null);
+            if (offlinePlayer == null) {
+                offlinePlayer = Bukkit.getOfflinePlayer(player);
                 this.plugin.debug("The player " + player
                         + " is not present at the usercache of bukkit. Using deprecated 'Bukkit.getOfflinePlayer(playerName)' function to proceed");
 
             }
 
-            this.addPlayerToTeamPackets(joining, offlinePlayer.get().getName());
-            this.cache(offlinePlayer.get().getName(), joining);
+            this.addPlayerToTeamPackets(joining, offlinePlayer.getName());
+            this.cache(offlinePlayer.getName(), joining);
         }
 
         this.plugin.debug(player + " has been added to team " + joining.getName());
@@ -95,17 +93,17 @@ public class NametagManager {
                 delete = this.removePlayerFromTeamPackets(fakeTeam, removing.getName());
             } else {
 
-                Optional<OfflinePlayer> toRemoveOffline = Optional.ofNullable(Arrays.stream(Bukkit.getOfflinePlayers())
+                OfflinePlayer toRemoveOffline = Arrays.stream(Bukkit.getOfflinePlayers())
                         .filter(offlinePlayerFromBukkitCache -> player.equals(offlinePlayerFromBukkitCache.getName())).findFirst()
-                        .orElse(null));
-                if (toRemoveOffline.isPresent() == false) {
-                    toRemoveOffline = Optional.ofNullable(Bukkit.getOfflinePlayer(player));
+                        .orElse(null);
+                if (toRemoveOffline == null) {
+                    toRemoveOffline = Bukkit.getOfflinePlayer(player);
                     this.plugin.debug("The player " + player
                             + " is not present at the usercache of bukkit. Using deprecated 'Bukkit.getOfflinePlayer(playerName)' function to proceed");
 
                 }
 
-                delete = this.removePlayerFromTeamPackets(fakeTeam, toRemoveOffline.get().getName());
+                delete = this.removePlayerFromTeamPackets(fakeTeam, toRemoveOffline.getName());
             }
 
             this.plugin.debug(player + " was removed from " + fakeTeam.getName());

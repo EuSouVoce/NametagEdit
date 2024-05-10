@@ -3,8 +3,11 @@ package com.nametagedit.plugin.packets;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import com.google.gson.Gson;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -96,7 +99,7 @@ class PacketAccessor {
                 PacketAccessor.playerConnection = typeNMSPlayer.getField("playerConnection");
                 PacketAccessor.sendPacket = typePlayerConnection.getMethod("sendPacket",
                         Class.forName("net.minecraft.server." + PacketAccessor.VERSION + ".Packet"));
-            } else if (PacketAccessor.MINOR_VERSION > 20 && PacketAccessor.VERSION == "v1_20_R6") {
+            } else if (PacketAccessor.VERSION == "v1_20_R6") {
                 PacketAccessor.packetClass = Class.forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket");
                 PacketAccessor.packetParamsClass = Class
                         .forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket$Parameters");

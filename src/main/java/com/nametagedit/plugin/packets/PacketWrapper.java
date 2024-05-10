@@ -166,6 +166,7 @@ public class PacketWrapper {
         try {
             if (PacketAccessor.isParamsVersion()) {
                 // 1.17+
+
                 PacketAccessor.PARAMS.set(this.packet, this.param == 0 ? Optional.ofNullable(this.packetParams) : Optional.empty());
             }
         } catch (final Exception e) {

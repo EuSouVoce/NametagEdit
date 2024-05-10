@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
@@ -16,6 +15,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
+import com.nametagedit.plugin.NametagEdit;
 import com.nametagedit.plugin.NametagMessages;
 import com.nametagedit.plugin.utils.Utils;
 
@@ -91,28 +91,26 @@ public class Converter {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private void handlePlayer(final YamlConfiguration config, final String line) {
         final String[] initialSplit = line.split("=");
         final String prefix = initialSplit[1].trim().split("\"")[1];
         final String[] whiteSpaces = initialSplit[0].trim().split(" ");
         final String playerName = whiteSpaces[0];
         final String type = whiteSpaces[1];
-        Optional<OfflinePlayer> offlinePlayer = Optional.ofNullable(Arrays.stream(Bukkit.getOfflinePlayers())
-                .filter(offlinePlayerFromBukkitCache -> playerName.equals(offlinePlayerFromBukkitCache.getName())).findFirst()
-                .orElse(null));
+        OfflinePlayer offlinePlayer = Arrays.stream(Bukkit.getOfflinePlayers())
+                .filter(offlinePlayerFromBukkitCache -> playerName.equals(offlinePlayerFromBukkitCache.getName())).findFirst().orElse(null);
         Boolean nullExcp = false;
-        if (offlinePlayer.isPresent() == false) {
+        if (offlinePlayer == null) {
             nullExcp = true;
-            offlinePlayer = Optional.ofNullable(Bukkit.getOfflinePlayer(playerName));
+            offlinePlayer = Bukkit.getOfflinePlayer(playerName);
         }
 
-        final String uuid = offlinePlayer.get().getUniqueId().toString();
+        final String uuid = offlinePlayer.getUniqueId().toString();
         config.set("Players." + uuid + ".Name", playerName);
         config.set("Players." + uuid + "." + type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase(), prefix);
         config.set("Players." + uuid + ".SortPriority", -1);
         if (nullExcp)
-            throw new NullPointerException("The player " + playerName
+            NametagEdit.getInstance().getLogger().info("The player " + playerName
                     + " is not present at the usercache of bukkit. Using deprecated 'Bukkit.getOfflinePlayer(playerName)' function to proceed");
 
     }

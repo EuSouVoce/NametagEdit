@@ -102,7 +102,7 @@ public class NametagEdit extends JavaPlugin {
             return;
         Bukkit.getPluginManager().disablePlugin(this);
         this.getLogger().severe("\n------------------------------------------------------\n" + "[WARNING] NametagEdit v"
-                + this.getDescription().getVersion() + " Failed to load! [WARNING]"
+                + this.getPluginMeta().getVersion() + " Failed to load! [WARNING]"
                 + "\n------------------------------------------------------" + "\nThis might be an issue with reflection. REPORT this:\n> "
                 + wrapper.error + "\nThe plugin will now self destruct.\n------------------------------------------------------");
     }

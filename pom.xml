@@ -256,8 +256,10 @@
                     <archive>
                       <manifestEntries>
                         <paperweight-mappings-namespace>mojang</paperweight-mappings-namespace>
+                        <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                       </manifestEntries>
                     </archive>
+                    <outputDirectory>C:/Users/EuSouVoce/Desktop/testserver/plugins</outputDirectory>
                   </configuration>
             </plugin>
         </plugins>
