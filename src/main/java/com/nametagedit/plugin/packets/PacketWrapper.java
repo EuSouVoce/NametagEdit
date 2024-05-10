@@ -1,10 +1,5 @@
 package com.nametagedit.plugin.packets;
 
-import com.nametagedit.plugin.NametagHandler;
-import com.nametagedit.plugin.utils.Utils;
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -12,6 +7,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
+
+import com.nametagedit.plugin.NametagHandler;
+import com.nametagedit.plugin.utils.Utils;
+
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class PacketWrapper {
 
     public String error;
@@ -21,47 +23,57 @@ public class PacketWrapper {
 
     private static Method CraftChatMessage;
     private static Class<? extends Enum> typeEnumChatFormat;
-    private static Enum RESET_COLOR;
+    private static Enum<?> RESET_COLOR;
 
     static {
         try {
             if (!PacketAccessor.isLegacyVersion()) {
                 if (!PacketAccessor.isParamsVersion()) {
-                    typeEnumChatFormat = (Class<? extends Enum>) Class.forName("net.minecraft.server." + PacketAccessor.VERSION + ".EnumChatFormat");
+                    PacketWrapper.typeEnumChatFormat = (Class<? extends Enum>) Class
+                            .forName("net.minecraft.server." + PacketAccessor.VERSION + ".EnumChatFormat");
                 } else {
-                    // 1.17+
-                    typeEnumChatFormat = (Class<? extends Enum>) Class.forName("net.minecraft.EnumChatFormat");
+                    if (PacketAccessor.VERSION == "v1_20_R6") {
+                        PacketWrapper.typeEnumChatFormat = (Class<? extends Enum>) Class.forName("net.minecraft.ChatFormatting");
+                    } else {
+                        // 1.17+
+                        PacketWrapper.typeEnumChatFormat = (Class<? extends Enum>) Class.forName("net.minecraft.EnumChatFormat");
+                    }
                 }
-                Class<?> typeCraftChatMessage = Class.forName("org.bukkit.craftbukkit." + PacketAccessor.VERSION + ".util.CraftChatMessage");
-                CraftChatMessage = typeCraftChatMessage.getMethod("fromString", String.class);
-                RESET_COLOR = Enum.valueOf(typeEnumChatFormat, "RESET");
+                Class<?> typeCraftChatMessage;
+                if (PacketAccessor.VERSION == "v1_20_R6") {
+                    typeCraftChatMessage = Class.forName("org.bukkit.craftbukkit.util.CraftChatMessage");
+                } else {
+                    typeCraftChatMessage = Class.forName("org.bukkit.craftbukkit." + PacketAccessor.VERSION + ".util.CraftChatMessage");
+                }
+                PacketWrapper.CraftChatMessage = typeCraftChatMessage.getMethod("fromString", String.class);
+                PacketWrapper.RESET_COLOR = Enum.valueOf(PacketWrapper.typeEnumChatFormat, "RESET");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
 
-    public PacketWrapper(String name, int param, List<String> members) {
+    public PacketWrapper(final String name, final int param, final List<String> members) {
         if (param != 3 && param != 4) {
             throw new IllegalArgumentException("Method must be join or leave for player constructor");
         }
         this.param = param;
-        setupDefaults(name, param);
-        setupMembers(members);
+        this.setupDefaults(name, param);
+        this.setupMembers(members);
     }
 
-    @SuppressWarnings("unchecked")
-    public PacketWrapper(String name, String prefix, String suffix, int param, Collection<?> players, boolean visible) {
+    public PacketWrapper(final String name, final String prefix, String suffix, final int param, final Collection<?> players,
+            final boolean visible) {
         this.param = param;
-        setupDefaults(name, param);
+        this.setupDefaults(name, param);
         if (param == 0 || param == 2) {
             try {
                 if (PacketAccessor.isLegacyVersion()) {
-                    PacketAccessor.DISPLAY_NAME.set(packet, name);
-                    PacketAccessor.PREFIX.set(packet, prefix);
-                    PacketAccessor.SUFFIX.set(packet, suffix);
+                    PacketAccessor.DISPLAY_NAME.set(this.packet, name);
+                    PacketAccessor.PREFIX.set(this.packet, prefix);
+                    PacketAccessor.SUFFIX.set(this.packet, suffix);
                 } else {
-                    String color = ChatColor.getLastColors(prefix);
+                    final String color = ChatColor.getLastColors(prefix);
                     String colorCode = null;
                     Enum<?> colorEnum = null;
 
@@ -72,82 +84,81 @@ public class PacketWrapper {
                         if (chatColor.equalsIgnoreCase("MAGIC"))
                             chatColor = "OBFUSCATED";
 
-                        colorEnum = Enum.valueOf(typeEnumChatFormat, chatColor);
+                        colorEnum = Enum.valueOf(PacketWrapper.typeEnumChatFormat, chatColor);
                     }
 
                     if (colorCode != null)
                         suffix = ChatColor.getByChar(colorCode) + suffix;
 
                     if (!PacketAccessor.isParamsVersion()) {
-                        PacketAccessor.TEAM_COLOR.set(packet, colorEnum == null ? RESET_COLOR : colorEnum);
-                        PacketAccessor.DISPLAY_NAME.set(packet, Array.get(CraftChatMessage.invoke(null, name), 0));
-                        PacketAccessor.PREFIX.set(packet, Array.get(CraftChatMessage.invoke(null, prefix), 0));
-                        PacketAccessor.SUFFIX.set(packet, Array.get(CraftChatMessage.invoke(null, suffix), 0));
+                        PacketAccessor.TEAM_COLOR.set(this.packet, colorEnum == null ? PacketWrapper.RESET_COLOR : colorEnum);
+                        PacketAccessor.DISPLAY_NAME.set(this.packet, Array.get(PacketWrapper.CraftChatMessage.invoke(null, name), 0));
+                        PacketAccessor.PREFIX.set(this.packet, Array.get(PacketWrapper.CraftChatMessage.invoke(null, prefix), 0));
+                        PacketAccessor.SUFFIX.set(this.packet, Array.get(PacketWrapper.CraftChatMessage.invoke(null, suffix), 0));
                     } else {
                         // 1.17+
-                        PacketAccessor.TEAM_COLOR.set(packetParams, colorEnum == null ? RESET_COLOR : colorEnum);
-                        PacketAccessor.DISPLAY_NAME.set(packetParams, Array.get(CraftChatMessage.invoke(null, name), 0));
-                        PacketAccessor.PREFIX.set(packetParams, Array.get(CraftChatMessage.invoke(null, prefix), 0));
-                        PacketAccessor.SUFFIX.set(packetParams, Array.get(CraftChatMessage.invoke(null, suffix), 0));
+                        PacketAccessor.TEAM_COLOR.set(this.packetParams, colorEnum == null ? PacketWrapper.RESET_COLOR : colorEnum);
+                        PacketAccessor.DISPLAY_NAME.set(this.packetParams, Array.get(PacketWrapper.CraftChatMessage.invoke(null, name), 0));
+                        PacketAccessor.PREFIX.set(this.packetParams, Array.get(PacketWrapper.CraftChatMessage.invoke(null, prefix), 0));
+                        PacketAccessor.SUFFIX.set(this.packetParams, Array.get(PacketWrapper.CraftChatMessage.invoke(null, suffix), 0));
                     }
                 }
 
                 if (!PacketAccessor.isParamsVersion()) {
-                    PacketAccessor.PACK_OPTION.set(packet, 1);
+                    PacketAccessor.PACK_OPTION.set(this.packet, 1);
 
                     if (PacketAccessor.VISIBILITY != null) {
-                        PacketAccessor.VISIBILITY.set(packet, visible ? "always" : "never");
+                        PacketAccessor.VISIBILITY.set(this.packet, visible ? "always" : "never");
                     }
                 } else {
                     // 1.17+
-                    PacketAccessor.PACK_OPTION.set(packetParams, 1);
+                    PacketAccessor.PACK_OPTION.set(this.packetParams, 1);
 
                     if (PacketAccessor.VISIBILITY != null) {
-                        PacketAccessor.VISIBILITY.set(packetParams, visible ? "always" : "never");
+                        PacketAccessor.VISIBILITY.set(this.packetParams, visible ? "always" : "never");
                     }
                 }
 
                 if (param == 0) {
-                    ((Collection) PacketAccessor.MEMBERS.get(packet)).addAll(players);
+                    ((Collection) PacketAccessor.MEMBERS.get(this.packet)).addAll(players);
                 }
-            } catch (Exception e) {
-                error = e.getMessage();
+            } catch (final Exception e) {
+                this.error = e.getMessage();
             }
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void setupMembers(Collection<?> players) {
         try {
             players = players == null || players.isEmpty() ? new ArrayList<>() : players;
-            ((Collection) PacketAccessor.MEMBERS.get(packet)).addAll(players);
-        } catch (Exception e) {
-            error = e.getMessage();
+            ((Collection) PacketAccessor.MEMBERS.get(this.packet)).addAll(players);
+        } catch (final Exception e) {
+            this.error = e.getMessage();
         }
     }
 
-    private void setupDefaults(String name, int param) {
+    private void setupDefaults(final String name, final int param) {
         try {
-            PacketAccessor.TEAM_NAME.set(packet, name);
-            PacketAccessor.PARAM_INT.set(packet, param);
+            PacketAccessor.TEAM_NAME.set(this.packet, name);
+            PacketAccessor.PARAM_INT.set(this.packet, param);
 
             if (PacketAccessor.isParamsVersion()) {
                 // 1.17+ These null values are not allowed, this initializes them.
-                PacketAccessor.MEMBERS.set(packet, new ArrayList<>());
-                PacketAccessor.PUSH.set(packetParams, "");
-                PacketAccessor.VISIBILITY.set(packetParams, "");
-                PacketAccessor.TEAM_COLOR.set(packetParams, RESET_COLOR);
+                PacketAccessor.MEMBERS.set(this.packet, new ArrayList<>());
+                PacketAccessor.PUSH.set(this.packetParams, "");
+                PacketAccessor.VISIBILITY.set(this.packetParams, "");
+                PacketAccessor.TEAM_COLOR.set(this.packetParams, PacketWrapper.RESET_COLOR);
             }
             if (NametagHandler.DISABLE_PUSH_ALL_TAGS && PacketAccessor.PUSH != null) {
                 if (!PacketAccessor.isParamsVersion()) {
-                    PacketAccessor.PUSH.set(packet, "never");
+                    PacketAccessor.PUSH.set(this.packet, "never");
                 } else {
                     // 1.17+
-                    PacketAccessor.PUSH.set(packetParams, "never");
+                    PacketAccessor.PUSH.set(this.packetParams, "never");
                 }
             }
-        } catch (Exception e) {
-            error = e.getMessage();
+        } catch (final Exception e) {
+            this.error = e.getMessage();
         }
     }
 
@@ -155,21 +166,21 @@ public class PacketWrapper {
         try {
             if (PacketAccessor.isParamsVersion()) {
                 // 1.17+
-                PacketAccessor.PARAMS.set(packet, param == 0 ? Optional.ofNullable(packetParams) : Optional.empty());
+                PacketAccessor.PARAMS.set(this.packet, this.param == 0 ? Optional.ofNullable(this.packetParams) : Optional.empty());
             }
-        } catch (Exception e) {
-            error = e.getMessage();
+        } catch (final Exception e) {
+            this.error = e.getMessage();
         }
     }
 
     public void send() {
-        constructPacket();
-        PacketAccessor.sendPacket(Utils.getOnline(), packet);
+        this.constructPacket();
+        PacketAccessor.sendPacket(Utils.getOnline(), this.packet);
     }
 
-    public void send(Player player) {
-        constructPacket();
-        PacketAccessor.sendPacket(player, packet);
+    public void send(final Player player) {
+        this.constructPacket();
+        PacketAccessor.sendPacket(player, this.packet);
     }
 
 }

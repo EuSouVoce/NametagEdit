@@ -1,26 +1,37 @@
 package com.nametagedit.plugin.storage.database;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+
 import com.nametagedit.plugin.NametagEdit;
 import com.nametagedit.plugin.NametagHandler;
 import com.nametagedit.plugin.api.data.GroupData;
 import com.nametagedit.plugin.api.data.PlayerData;
 import com.nametagedit.plugin.storage.AbstractConfig;
-import com.nametagedit.plugin.storage.database.tasks.*;
+import com.nametagedit.plugin.storage.database.tasks.DataDownloader;
+import com.nametagedit.plugin.storage.database.tasks.DatabaseUpdater;
+import com.nametagedit.plugin.storage.database.tasks.GroupAdd;
+import com.nametagedit.plugin.storage.database.tasks.GroupConfigUpdater;
+import com.nametagedit.plugin.storage.database.tasks.GroupDeleter;
+import com.nametagedit.plugin.storage.database.tasks.GroupPriority;
+import com.nametagedit.plugin.storage.database.tasks.GroupSaver;
+import com.nametagedit.plugin.storage.database.tasks.PlayerDeleter;
+import com.nametagedit.plugin.storage.database.tasks.PlayerLoader;
+import com.nametagedit.plugin.storage.database.tasks.PlayerPriority;
+import com.nametagedit.plugin.storage.database.tasks.PlayerSaver;
 import com.nametagedit.plugin.utils.Configuration;
 import com.nametagedit.plugin.utils.UUIDFetcher;
 import com.zaxxer.hikari.HikariDataSource;
-import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
 
 public class DatabaseConfig implements AbstractConfig {
 
-    private NametagEdit plugin;
-    private NametagHandler handler;
+    private final NametagEdit plugin;
+    private final NametagHandler handler;
     private HikariDataSource hikari;
 
     // These are used if the user wants to customize the
@@ -29,21 +40,21 @@ public class DatabaseConfig implements AbstractConfig {
     public static String TABLE_PLAYERS;
     public static String TABLE_CONFIG;
 
-    public DatabaseConfig(NametagEdit plugin, NametagHandler handler, Configuration config) {
+    public DatabaseConfig(final NametagEdit plugin, final NametagHandler handler, final Configuration config) {
         this.plugin = plugin;
         this.handler = handler;
-        TABLE_GROUPS = "`" + config.getString("MySQL.GroupsTable", "nte_groups") + "`";
-        TABLE_PLAYERS = "`" + config.getString("MySQL.PlayersTable", "nte_players") + "`";
-        TABLE_CONFIG = "`" + config.getString("MySQL.ConfigTable", "nte_config") + "`";
+        DatabaseConfig.TABLE_GROUPS = "`" + config.getString("MySQL.GroupsTable", "nte_groups") + "`";
+        DatabaseConfig.TABLE_PLAYERS = "`" + config.getString("MySQL.PlayersTable", "nte_players") + "`";
+        DatabaseConfig.TABLE_CONFIG = "`" + config.getString("MySQL.ConfigTable", "nte_config") + "`";
     }
 
     @Override
     public void load() {
-        FileConfiguration config = handler.getConfig();
-        shutdown();
-        hikari = new HikariDataSource();
-        hikari.setMaximumPoolSize(config.getInt("MinimumPoolSize", 10));
-        hikari.setPoolName("NametagEdit Pool");
+        final FileConfiguration config = this.handler.getConfig();
+        this.shutdown();
+        this.hikari = new HikariDataSource();
+        this.hikari.setMaximumPoolSize(config.getInt("MinimumPoolSize", 10));
+        this.hikari.setPoolName("NametagEdit Pool");
 
         String port = "3306";
 
@@ -51,81 +62,72 @@ public class DatabaseConfig implements AbstractConfig {
             port = config.getString("MySQL.Port");
         }
 
-        hikari.setJdbcUrl("jdbc:mysql://" + config.getString("MySQL.Hostname") + ":" + port + "/" + config.getString("MySQL.Database"));
-        hikari.addDataSourceProperty("useSSL", false);
-        hikari.addDataSourceProperty("requireSSL", false);
-        hikari.addDataSourceProperty("verifyServerCertificate", false);
-        hikari.addDataSourceProperty("user", config.getString("MySQL.Username"));
-        hikari.addDataSourceProperty("password", config.getString("MySQL.Password"));
+        this.hikari
+                .setJdbcUrl("jdbc:mysql://" + config.getString("MySQL.Hostname") + ":" + port + "/" + config.getString("MySQL.Database"));
+        this.hikari.addDataSourceProperty("useSSL", false);
+        this.hikari.addDataSourceProperty("requireSSL", false);
+        this.hikari.addDataSourceProperty("verifyServerCertificate", false);
+        this.hikari.addDataSourceProperty("user", config.getString("MySQL.Username"));
+        this.hikari.addDataSourceProperty("password", config.getString("MySQL.Password"));
 
-        hikari.setUsername(config.getString("MySQL.Username"));
-        hikari.setPassword(config.getString("MySQL.Password"));
+        this.hikari.setUsername(config.getString("MySQL.Username"));
+        this.hikari.setPassword(config.getString("MySQL.Password"));
 
-        new DatabaseUpdater(handler, hikari, plugin).runTaskAsynchronously(plugin);
+        new DatabaseUpdater(this.handler, this.hikari, this.plugin).runTaskAsynchronously(this.plugin);
     }
 
     @Override
-    public void reload() {
-        new DataDownloader(handler, hikari).runTaskAsynchronously(plugin);
-    }
+    public void reload() { new DataDownloader(this.handler, this.hikari).runTaskAsynchronously(this.plugin); }
 
     @Override
     public void shutdown() {
-        if (hikari != null) {
-            hikari.close();
+        if (this.hikari != null) {
+            this.hikari.close();
         }
     }
 
     @Override
-    public void load(Player player, boolean loggedIn) {
-        new PlayerLoader(player.getUniqueId(), plugin, handler, hikari, loggedIn).runTaskAsynchronously(plugin);
+    public void load(final Player player, final boolean loggedIn) {
+        new PlayerLoader(player.getUniqueId(), this.plugin, this.handler, this.hikari, loggedIn).runTaskAsynchronously(this.plugin);
     }
 
     @Override
-    public void save(PlayerData... playerData) {
-        new PlayerSaver(playerData, hikari).runTaskAsynchronously(plugin);
-    }
+    public void save(final PlayerData... playerData) { new PlayerSaver(playerData, this.hikari).runTaskAsynchronously(this.plugin); }
 
     @Override
-    public void save(GroupData... groupData) {
-        new GroupSaver(groupData, hikari).runTaskAsynchronously(plugin);
-    }
+    public void save(final GroupData... groupData) { new GroupSaver(groupData, this.hikari).runTaskAsynchronously(this.plugin); }
 
     @Override
-    public void savePriority(boolean playerTag, String key, final int priority) {
+    public void savePriority(final boolean playerTag, final String key, final int priority) {
         if (playerTag) {
-            UUIDFetcher.lookupUUID(key, plugin, uuid -> {
+            UUIDFetcher.lookupUUID(key, this.plugin, uuid -> {
                 if (uuid != null) {
-                    new PlayerPriority(uuid, priority, hikari).runTaskAsynchronously(plugin);
+                    new PlayerPriority(uuid, priority, this.hikari).runTaskAsynchronously(this.plugin);
                 } else {
-                    plugin.getLogger().severe("An error has occurred while looking for UUID.");
+                    this.plugin.getLogger().severe("An error has occurred while looking for UUID.");
                 }
             });
         } else {
-            new GroupPriority(key, priority, hikari).runTaskAsynchronously(plugin);
+            new GroupPriority(key, priority, this.hikari).runTaskAsynchronously(this.plugin);
         }
     }
 
     @Override
-    public void delete(GroupData groupData) {
-        new GroupDeleter(groupData.getGroupName(), hikari).runTaskAsynchronously(plugin);
+    public void delete(final GroupData groupData) {
+        new GroupDeleter(groupData.getGroupName(), this.hikari).runTaskAsynchronously(this.plugin);
     }
 
     @Override
-    public void add(GroupData groupData) {
-        new GroupAdd(groupData, hikari).runTaskAsynchronously(plugin);
-    }
+    public void add(final GroupData groupData) { new GroupAdd(groupData, this.hikari).runTaskAsynchronously(this.plugin); }
 
     @Override
-    public void clear(UUID uuid, String targetName) {
-        new PlayerDeleter(uuid, hikari).runTaskAsynchronously(plugin);
-    }
+    public void clear(final UUID uuid, final String targetName) { new PlayerDeleter(uuid, this.hikari).runTaskAsynchronously(this.plugin); }
 
     @Override
-    public void orderGroups(CommandSender commandSender, List<String> order) {
+    public void orderGroups(final CommandSender commandSender, final List<String> order) {
         String formatted = Arrays.toString(order.toArray());
         formatted = formatted.substring(1, formatted.length() - 1).replace(",", "");
-        new GroupConfigUpdater("order", formatted, hikari).runTaskAsynchronously(handler.getPlugin());
+        new GroupConfigUpdater("order", formatted, this.hikari).runTaskAsynchronously(this.handler.getPlugin());
     }
 
 }

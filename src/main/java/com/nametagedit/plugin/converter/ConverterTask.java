@@ -1,18 +1,24 @@
 package com.nametagedit.plugin.converter;
 
-import com.nametagedit.plugin.NametagEdit;
-import com.nametagedit.plugin.NametagMessages;
-import com.nametagedit.plugin.storage.database.DatabaseConfig;
-import com.nametagedit.plugin.utils.Utils;
-import lombok.AllArgsConstructor;
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.*;
+import com.nametagedit.plugin.NametagEdit;
+import com.nametagedit.plugin.NametagMessages;
+import com.nametagedit.plugin.storage.database.DatabaseConfig;
+import com.nametagedit.plugin.utils.Utils;
+
+import lombok.AllArgsConstructor;
 
 /**
  * This class converts to and from Flatfile and MySQL
@@ -26,33 +32,33 @@ public class ConverterTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        FileConfiguration config = plugin.getHandler().getConfig();
-        String connectionString = "jdbc:mysql://" + config.getString("MySQL.Hostname") + ":" + config.getInt("MySQL.Port") + "/" + config.getString("MySQL.Database");
-        try (Connection connection = DriverManager.getConnection(connectionString, config.getString("MySQL.Username"), config.getString("MySQL.Password"))) {
-            if (databaseToFile) {
-                convertDatabaseToFile(connection);
+        final FileConfiguration config = this.plugin.getHandler().getConfig();
+        final String connectionString = "jdbc:mysql://" + config.getString("MySQL.Hostname") + ":" + config.getInt("MySQL.Port") + "/"
+                + config.getString("MySQL.Database");
+        try (Connection connection = DriverManager.getConnection(connectionString, config.getString("MySQL.Username"),
+                config.getString("MySQL.Password"))) {
+            if (this.databaseToFile) {
+                this.convertDatabaseToFile(connection);
             } else {
-                convertFilesToDatabase(connection);
+                this.convertFilesToDatabase(connection);
             }
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
         } finally {
             new BukkitRunnable() {
                 @Override
-                public void run() {
-                    plugin.getHandler().reload();
-                }
-            }.runTask(plugin);
+                public void run() { ConverterTask.this.plugin.getHandler().reload(); }
+            }.runTask(this.plugin);
         }
     }
 
-    private void convertDatabaseToFile(Connection connection) {
+    private void convertDatabaseToFile(final Connection connection) {
         try {
             final String GROUP_QUERY = "SELECT name, prefix, suffix, permission, priority FROM " + DatabaseConfig.TABLE_GROUPS;
             final String PLAYER_QUERY = "SELECT name, uuid, prefix, suffix, priority FROM " + DatabaseConfig.TABLE_PLAYERS;
 
-            final File groupsFile = new File(plugin.getDataFolder(), "groups_CONVERTED.yml");
-            final File playersFile = new File(plugin.getDataFolder(), "players_CONVERTED.yml");
+            final File groupsFile = new File(this.plugin.getDataFolder(), "groups_CONVERTED.yml");
+            final File playersFile = new File(this.plugin.getDataFolder(), "players_CONVERTED.yml");
 
             final YamlConfiguration groups = Utils.getConfig(groupsFile);
             final YamlConfiguration players = Utils.getConfig(playersFile);
@@ -81,17 +87,18 @@ public class ConverterTask extends BukkitRunnable {
         }
     }
 
-    private void convertFilesToDatabase(Connection connection) {
-        final File groupsFile = new File(plugin.getDataFolder(), "groups.yml");
-        final File playersFile = new File(plugin.getDataFolder(), "players.yml");
+    private void convertFilesToDatabase(final Connection connection) {
+        final File groupsFile = new File(this.plugin.getDataFolder(), "groups.yml");
+        final File playersFile = new File(this.plugin.getDataFolder(), "players.yml");
 
         final YamlConfiguration groups = Utils.getConfig(groupsFile);
         final YamlConfiguration players = Utils.getConfig(playersFile);
 
-        if (players != null && checkValid(players, "Players")) {
+        if (players != null && this.checkValid(players, "Players")) {
             // Import the player entries from the file
-            try (PreparedStatement playerInsert = connection.prepareStatement("INSERT INTO " + DatabaseConfig.TABLE_PLAYERS + " VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `prefix`=?, `suffix`=?")) {
-                for (String key : players.getConfigurationSection("Players").getKeys(false)) {
+            try (PreparedStatement playerInsert = connection.prepareStatement("INSERT INTO " + DatabaseConfig.TABLE_PLAYERS
+                    + " VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `prefix`=?, `suffix`=?")) {
+                for (final String key : players.getConfigurationSection("Players").getKeys(false)) {
                     playerInsert.setString(1, key);
                     playerInsert.setString(2, players.getString("Players." + key + ".Name"));
                     playerInsert.setString(3, Utils.deformat(players.getString("Players." + key + ".Prefix", "")));
@@ -103,15 +110,16 @@ public class ConverterTask extends BukkitRunnable {
                 }
 
                 playerInsert.executeBatch();
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 e.printStackTrace();
             }
         }
 
-        if (groups != null && checkValid(groups, "Groups")) {
+        if (groups != null && this.checkValid(groups, "Groups")) {
             // Import the player entries from the file
-            try (PreparedStatement groupInsert = connection.prepareStatement("INSERT INTO " + DatabaseConfig.TABLE_GROUPS + " VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `prefix`=?, `suffix`=?, `permission`=?")) {
-                for (String key : groups.getConfigurationSection("Groups").getKeys(false)) {
+            try (PreparedStatement groupInsert = connection.prepareStatement("INSERT INTO " + DatabaseConfig.TABLE_GROUPS
+                    + " VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `prefix`=?, `suffix`=?, `permission`=?")) {
+                for (final String key : groups.getConfigurationSection("Groups").getKeys(false)) {
                     groupInsert.setString(1, key);
                     groupInsert.setString(2, groups.getString("Groups." + key + ".Permission"));
                     groupInsert.setString(3, Utils.deformat(groups.getString("Groups." + key + ".Prefix", "")));
@@ -124,15 +132,15 @@ public class ConverterTask extends BukkitRunnable {
                 }
 
                 groupInsert.executeBatch();
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private boolean checkValid(FileConfiguration configuration, String section) {
+    private boolean checkValid(final FileConfiguration configuration, final String section) {
         if (!configuration.contains(section)) {
-            NametagMessages.FILE_MISCONFIGURED.send(sender, section + ".yml");
+            NametagMessages.FILE_MISCONFIGURED.send(this.sender, section + ".yml");
             return false;
         }
 

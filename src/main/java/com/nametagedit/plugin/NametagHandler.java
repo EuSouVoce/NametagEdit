@@ -1,21 +1,14 @@
 package com.nametagedit.plugin;
 
-import com.nametagedit.plugin.api.data.GroupData;
-import com.nametagedit.plugin.api.data.INametag;
-import com.nametagedit.plugin.api.data.PlayerData;
-import com.nametagedit.plugin.api.events.NametagEvent;
-import com.nametagedit.plugin.api.events.NametagFirstLoadedEvent;
-import com.nametagedit.plugin.metrics.Metrics;
-import com.nametagedit.plugin.storage.AbstractConfig;
-import com.nametagedit.plugin.storage.database.DatabaseConfig;
-import com.nametagedit.plugin.storage.flatfile.FlatFileConfig;
-import com.nametagedit.plugin.utils.Configuration;
-import com.nametagedit.plugin.utils.UUIDFetcher;
-import com.nametagedit.plugin.utils.Utils;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import me.clip.placeholderapi.PlaceholderAPIPlugin;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -30,16 +23,30 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import com.nametagedit.plugin.api.data.GroupData;
+import com.nametagedit.plugin.api.data.INametag;
+import com.nametagedit.plugin.api.data.PlayerData;
+import com.nametagedit.plugin.api.events.NametagEvent;
+import com.nametagedit.plugin.api.events.NametagFirstLoadedEvent;
+import com.nametagedit.plugin.metrics.Metrics;
+import com.nametagedit.plugin.storage.AbstractConfig;
+import com.nametagedit.plugin.storage.database.DatabaseConfig;
+import com.nametagedit.plugin.storage.flatfile.FlatFileConfig;
+import com.nametagedit.plugin.utils.Configuration;
+import com.nametagedit.plugin.utils.UUIDFetcher;
+import com.nametagedit.plugin.utils.Utils;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import me.clip.placeholderapi.PlaceholderAPIPlugin;
 
 @Getter
 @Setter
 public class NametagHandler implements Listener {
 
-    // Multiple threads access resources. We need to make sure we avoid concurrency issues.
+    // Multiple threads access resources. We need to make sure we avoid concurrency
+    // issues.
     private ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     public static boolean DISABLE_PUSH_ALL_TAGS = false;
@@ -66,8 +73,8 @@ public class NametagHandler implements Listener {
     private NametagEdit plugin;
     private NametagManager nametagManager;
 
-    public NametagHandler(NametagEdit plugin, NametagManager nametagManager) {
-        this.config = getCustomConfig(plugin);
+    public NametagHandler(final NametagEdit plugin, final NametagManager nametagManager) {
+        this.config = this.getCustomConfig(plugin);
         this.plugin = plugin;
         this.nametagManager = nametagManager;
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -75,42 +82,40 @@ public class NametagHandler implements Listener {
         // Apply config properties
         this.applyConfig();
 
-        if (config.getBoolean("MySQL.Enabled")) {
-            abstractConfig = new DatabaseConfig(plugin, this, config);
+        if (this.config.getBoolean("MySQL.Enabled")) {
+            this.abstractConfig = new DatabaseConfig(plugin, this, this.config);
         } else {
-            abstractConfig = new FlatFileConfig(plugin, this);
+            this.abstractConfig = new FlatFileConfig(plugin, this);
         }
 
         new BukkitRunnable() {
             @Override
-            public void run() {
-                abstractConfig.load();
-            }
+            public void run() { NametagHandler.this.abstractConfig.load(); }
         }.runTaskAsynchronously(plugin);
     }
 
     /**
      * This function loads our custom config with comments, and includes changes
      */
-    private Configuration getCustomConfig(Plugin plugin) {
-        File file = new File(plugin.getDataFolder(), "config.yml");
+    private Configuration getCustomConfig(final Plugin plugin) {
+        final File file = new File(plugin.getDataFolder(), "config.yml");
         if (!file.exists()) {
             plugin.saveDefaultConfig();
 
-            Configuration newConfig = new Configuration(file);
+            final Configuration newConfig = new Configuration(file);
             newConfig.reload(true);
             return newConfig;
         } else {
-            Configuration oldConfig = new Configuration(file);
+            final Configuration oldConfig = new Configuration(file);
             oldConfig.reload(false);
 
             file.delete();
             plugin.saveDefaultConfig();
 
-            Configuration newConfig = new Configuration(file);
+            final Configuration newConfig = new Configuration(file);
             newConfig.reload(true);
 
-            for (String key : oldConfig.getKeys(false)) {
+            for (final String key : oldConfig.getKeys(false)) {
                 if (newConfig.contains(key)) {
                     newConfig.set(key, oldConfig.get(key));
                 }
@@ -125,155 +130,146 @@ public class NametagHandler implements Listener {
      * Cleans up any nametag data on the server to prevent memory leaks
      */
     @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        nametagManager.reset(event.getPlayer().getName());
-    }
+    public void onQuit(final PlayerQuitEvent event) { this.nametagManager.reset(event.getPlayer().getName()); }
 
     /**
      * Applies tags to a player
      */
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(final PlayerJoinEvent event) {
         final Player player = event.getPlayer();
-        nametagManager.sendTeams(player);
+        this.nametagManager.sendTeams(player);
 
         new BukkitRunnable() {
             @Override
-            public void run() {
-                abstractConfig.load(player, true);
-            }
-        }.runTaskLaterAsynchronously(plugin, 1);
+            public void run() { NametagHandler.this.abstractConfig.load(player, true); }
+        }.runTaskLaterAsynchronously(this.plugin, 1);
     }
 
     /**
-     * Some users may have different permissions per world.
-     * If this is enabled, their tag will be reloaded on TP.
+     * Some users may have different permissions per world. If this is enabled,
+     * their tag will be reloaded on TP.
      */
     @EventHandler
     public void onTeleport(final PlayerChangedWorldEvent event) {
-        if (!refreshTagOnWorldChange) return;
+        if (!this.refreshTagOnWorldChange)
+            return;
 
         new BukkitRunnable() {
             @Override
-            public void run() {
-                applyTagToPlayer(event.getPlayer(), false);
-            }
-        }.runTaskLater(plugin, 3);
+            public void run() { NametagHandler.this.applyTagToPlayer(event.getPlayer(), false); }
+        }.runTaskLater(this.plugin, 3);
     }
 
-    private void handleClear(UUID uuid, String player) {
-        removePlayerData(uuid);
-        nametagManager.reset(player);
-        abstractConfig.clear(uuid, player);
+    private void handleClear(final UUID uuid, final String player) {
+        this.removePlayerData(uuid);
+        this.nametagManager.reset(player);
+        this.abstractConfig.clear(uuid, player);
     }
 
     public void clearMemoryData() {
         try {
-            readWriteLock.writeLock().lock();
-            groupData.clear();
-            playerData.clear();
+            this.readWriteLock.writeLock().lock();
+            this.groupData.clear();
+            this.playerData.clear();
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
-    public void removePlayerData(UUID uuid) {
+    public void removePlayerData(final UUID uuid) {
         try {
-            readWriteLock.writeLock().lock();
-            playerData.remove(uuid);
+            this.readWriteLock.writeLock().lock();
+            this.playerData.remove(uuid);
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
-    public void storePlayerData(UUID uuid, PlayerData data) {
+    public void storePlayerData(final UUID uuid, final PlayerData data) {
         try {
-            readWriteLock.writeLock().lock();
-            playerData.put(uuid, data);
+            this.readWriteLock.writeLock().lock();
+            this.playerData.put(uuid, data);
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
-    public void assignGroupData(List<GroupData> groupData) {
+    public void assignGroupData(final List<GroupData> groupData) {
         try {
-            readWriteLock.writeLock().lock();
+            this.readWriteLock.writeLock().lock();
             this.groupData = groupData;
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
-    public void assignData(List<GroupData> groupData, Map<UUID, PlayerData> playerData) {
+    public void assignData(final List<GroupData> groupData, final Map<UUID, PlayerData> playerData) {
         try {
-            readWriteLock.writeLock().lock();
+            this.readWriteLock.writeLock().lock();
             this.groupData = groupData;
             this.playerData = playerData;
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
     // ==========================================
     // Below are methods used by the API/Commands
     // ==========================================
-    boolean debug() {
-        return debug;
-    }
+    boolean debug() { return this.debug; }
 
     void toggleDebug() {
-        debug = !debug;
-        config.set("Debug", debug);
-        config.save();
+        this.debug = !this.debug;
+        this.config.set("Debug", this.debug);
+        this.config.save();
     }
 
     void toggleLongTags() {
-        longNametagsEnabled = !longNametagsEnabled;
-        config.set("Tablist.LongTags", longNametagsEnabled);
-        config.save();
+        this.longNametagsEnabled = !this.longNametagsEnabled;
+        this.config.set("Tablist.LongTags", this.longNametagsEnabled);
+        this.config.save();
     }
 
     // =================================================
     // Below are methods that we have to be careful with
     // as they can be called from different threads
     // =================================================
-    public PlayerData getPlayerData(Player player) {
-        return player == null ? null : playerData.get(player.getUniqueId());
-    }
+    public PlayerData getPlayerData(final Player player) { return player == null ? null : this.playerData.get(player.getUniqueId()); }
 
-    void addGroup(GroupData data) {
-        abstractConfig.add(data);
+    void addGroup(final GroupData data) {
+        this.abstractConfig.add(data);
 
         try {
-            readWriteLock.writeLock().lock();
-            groupData.add(data);
+            this.readWriteLock.writeLock().lock();
+            this.groupData.add(data);
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
-    void deleteGroup(GroupData data) {
-        abstractConfig.delete(data);
+    void deleteGroup(final GroupData data) {
+        this.abstractConfig.delete(data);
 
         try {
-            readWriteLock.writeLock().lock();
-            groupData.remove(data);
+            this.readWriteLock.writeLock().lock();
+            this.groupData.remove(data);
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
     public List<GroupData> getGroupData() {
         try {
-            readWriteLock.writeLock().lock();
-            return new ArrayList<>(groupData); // Create a copy instead of unmodifiable
+            this.readWriteLock.writeLock().lock();
+            return new ArrayList<>(this.groupData); // Create a copy instead of unmodifiable
         } finally {
-            readWriteLock.writeLock().unlock();
+            this.readWriteLock.writeLock().unlock();
         }
     }
 
-    public GroupData getGroupData(String key) {
-        for (GroupData groupData : getGroupData()) {
+    public GroupData getGroupData(final String key) {
+        for (final GroupData groupData : this.getGroupData()) {
             if (groupData.getGroupName().equalsIgnoreCase(key)) {
                 return groupData;
             }
@@ -283,59 +279,63 @@ public class NametagHandler implements Listener {
     }
 
     /**
-     * Replaces placeholders when a player tag is created.
-     * Maxim and Clip's plugins are searched for, and input
-     * is replaced. We use direct imports to avoid any problems!
-     * (So don't change that)
+     * Replaces placeholders when a player tag is created. Maxim and Clip's plugins
+     * are searched for, and input is replaced. We use direct imports to avoid any
+     * problems! (So don't change that)
      */
-    public String formatWithPlaceholders(Player player, String input, boolean limitChars) {
-        plugin.debug("Formatting text..");
-        if (input == null) return "";
-        if (player == null) return input;
+    public String formatWithPlaceholders(final Player player, String input, final boolean limitChars) {
+        this.plugin.debug("Formatting text..");
+        if (input == null)
+            return "";
+        if (player == null)
+            return input;
 
         // The string can become null again at this point. Add another check.
         if (input != null && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            plugin.debug("Trying to use PlaceholderAPI for placeholders");
+            this.plugin.debug("Trying to use PlaceholderAPI for placeholders");
             input = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, input);
         }
 
-        plugin.debug("Applying colors..");
+        this.plugin.debug("Applying colors..");
         return Utils.format(input, limitChars);
     }
 
-    private BukkitTask createTask(String path, BukkitTask existing, Runnable runnable) {
+    private BukkitTask createTask(final String path, final BukkitTask existing, final Runnable runnable) {
         if (existing != null) {
             existing.cancel();
         }
 
-        if (config.getInt(path, -1) <= 0) return null;
-        return Bukkit.getScheduler().runTaskTimer(plugin, runnable, 0, 20L * config.getInt(path));
+        if (this.config.getInt(path, -1) <= 0)
+            return null;
+        return Bukkit.getScheduler().runTaskTimer(this.plugin, runnable, 0, 20L * this.config.getInt(path));
     }
 
     public void reload() {
-        config.reload(true);
-        applyConfig();
-        nametagManager.reset();
-        abstractConfig.reload();
+        this.config.reload(true);
+        this.applyConfig();
+        this.nametagManager.reset();
+        this.abstractConfig.reload();
     }
 
     private void applyConfig() {
-        this.debug = config.getBoolean("Debug");
-        this.tabListEnabled = config.getBoolean("Tablist.Enabled");
-        this.longNametagsEnabled = config.getBoolean("Tablist.LongTags");
-        this.refreshTagOnWorldChange = config.getBoolean("RefreshTagOnWorldChange");
-        DISABLE_PUSH_ALL_TAGS = config.getBoolean("DisablePush");
+        this.debug = this.config.getBoolean("Debug");
+        this.tabListEnabled = this.config.getBoolean("Tablist.Enabled");
+        this.longNametagsEnabled = this.config.getBoolean("Tablist.LongTags");
+        this.refreshTagOnWorldChange = this.config.getBoolean("RefreshTagOnWorldChange");
+        NametagHandler.DISABLE_PUSH_ALL_TAGS = this.config.getBoolean("DisablePush");
 
-        if (config.getBoolean("MetricsEnabled")) {
-            Metrics m = new Metrics(NametagEdit.getPlugin(NametagEdit.class));
-            m.addCustomChart(new Metrics.SimplePie("using_spigot", () -> PlaceholderAPIPlugin.getServerVersion().isSpigot() ? "yes" : "no"));
+        if (this.config.getBoolean("MetricsEnabled")) {
+            final Metrics m = new Metrics(NametagEdit.getPlugin(NametagEdit.class));
+            m.addCustomChart(
+                    new Metrics.SimplePie("using_spigot", () -> PlaceholderAPIPlugin.getServerVersion().isSpigot() ? "yes" : "no"));
         }
 
-        clearEmptyTeamTask = createTask("ClearEmptyTeamsInterval", clearEmptyTeamTask, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "nte teams clear"));
+        this.clearEmptyTeamTask = this.createTask("ClearEmptyTeamsInterval", this.clearEmptyTeamTask,
+                () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "nte teams clear"));
 
-        refreshNametagTask = createTask("RefreshInterval", refreshNametagTask, () -> {
-            nametagManager.reset();
-            applyTags();
+        this.refreshNametagTask = this.createTask("RefreshInterval", this.refreshNametagTask, () -> {
+            this.nametagManager.reset();
+            this.applyTags();
         });
     }
 
@@ -343,20 +343,18 @@ public class NametagHandler implements Listener {
         if (!Bukkit.isPrimaryThread()) {
             new BukkitRunnable() {
                 @Override
-                public void run() {
-                    applyTags();
-                }
-            }.runTask(plugin);
+                public void run() { NametagHandler.this.applyTags(); }
+            }.runTask(this.plugin);
             return;
         }
 
-        for (Player online : Utils.getOnline()) {
+        for (final Player online : Utils.getOnline()) {
             if (online != null) {
-                applyTagToPlayer(online, false);
+                this.applyTagToPlayer(online, false);
             }
         }
 
-        plugin.debug("Applied tags to all online players.");
+        this.plugin.debug("Applied tags to all online players.");
     }
 
     public void applyTagToPlayer(final Player player, final boolean loggedIn) {
@@ -364,16 +362,14 @@ public class NametagHandler implements Listener {
         if (Bukkit.isPrimaryThread()) {
             new BukkitRunnable() {
                 @Override
-                public void run() {
-                    applyTagToPlayer(player, loggedIn);
-                }
-            }.runTaskAsynchronously(plugin);
+                public void run() { NametagHandler.this.applyTagToPlayer(player, loggedIn); }
+            }.runTaskAsynchronously(this.plugin);
             return;
         }
 
-        INametag tempNametag = getPlayerData(player);
+        INametag tempNametag = this.getPlayerData(player);
         if (tempNametag == null) {
-            for (GroupData group : getGroupData()) {
+            for (final GroupData group : this.getGroupData()) {
                 if (player.hasPermission(group.getBukkitPermission())) {
                     tempNametag = group;
                     break;
@@ -381,22 +377,25 @@ public class NametagHandler implements Listener {
             }
         }
 
-        if (tempNametag == null) return;
-        plugin.debug("Applying " + (tempNametag.isPlayerTag() ? "PlayerTag" : "GroupTag") + " to " + player.getName());
+        if (tempNametag == null)
+            return;
+        this.plugin.debug("Applying " + (tempNametag.isPlayerTag() ? "PlayerTag" : "GroupTag") + " to " + player.getName());
 
         final INametag nametag = tempNametag;
         new BukkitRunnable() {
             @Override
             public void run() {
-                nametagManager.setNametag(player.getName(), formatWithPlaceholders(player, nametag.getPrefix(), true),
-                        formatWithPlaceholders(player, nametag.getSuffix(), true), nametag.getSortPriority());
+                NametagHandler.this.nametagManager.setNametag(player.getName(),
+                        NametagHandler.this.formatWithPlaceholders(player, nametag.getPrefix(), true),
+                        NametagHandler.this.formatWithPlaceholders(player, nametag.getSuffix(), true), nametag.getSortPriority());
                 // If the TabList is disabled...
-                if (!tabListEnabled) {
+                if (!NametagHandler.this.tabListEnabled) {
                     // apply the default white username to the player.
                     player.setPlayerListName(Utils.format("&f" + player.getPlayerListName()));
                 } else {
-                    if (longNametagsEnabled) {
-                        player.setPlayerListName(formatWithPlaceholders(player, nametag.getPrefix() + player.getName() + nametag.getSuffix(), false));
+                    if (NametagHandler.this.longNametagsEnabled) {
+                        player.setPlayerListName(NametagHandler.this.formatWithPlaceholders(player,
+                                nametag.getPrefix() + player.getName() + nametag.getSuffix(), false));
                     } else {
                         player.setPlayerListName(null);
                     }
@@ -406,39 +405,39 @@ public class NametagHandler implements Listener {
                     Bukkit.getPluginManager().callEvent(new NametagFirstLoadedEvent(player, nametag));
                 }
             }
-        }.runTask(plugin);
+        }.runTask(this.plugin);
     }
 
     void clear(final CommandSender sender, final String player) {
-        Player target = Bukkit.getPlayerExact(player);
+        final Player target = Bukkit.getPlayerExact(player);
         if (target != null) {
-            handleClear(target.getUniqueId(), player);
+            this.handleClear(target.getUniqueId(), player);
             return;
         }
 
-        UUIDFetcher.lookupUUID(player, plugin, uuid -> {
+        UUIDFetcher.lookupUUID(player, this.plugin, uuid -> {
             if (uuid == null) {
                 NametagMessages.UUID_LOOKUP_FAILED.send(sender);
             } else {
-                handleClear(uuid, player);
+                this.handleClear(uuid, player);
             }
         });
     }
 
-    void save(CommandSender sender, boolean playerTag, String key, int priority) {
+    void save(final CommandSender sender, final boolean playerTag, final String key, final int priority) {
         if (playerTag) {
-            Player player = Bukkit.getPlayerExact(key);
+            final Player player = Bukkit.getPlayerExact(key);
 
-            PlayerData data = getPlayerData(player);
+            final PlayerData data = this.getPlayerData(player);
             if (data == null) {
-                abstractConfig.savePriority(true, key, priority);
+                this.abstractConfig.savePriority(true, key, priority);
                 return;
             }
 
             data.setSortPriority(priority);
-            abstractConfig.save(data);
+            this.abstractConfig.save(data);
         } else {
-            GroupData groupData = getGroupData(key);
+            final GroupData groupData = this.getGroupData(key);
 
             if (groupData == null) {
                 sender.sendMessage(ChatColor.RED + "Group " + key + " does not exist!");
@@ -446,23 +445,23 @@ public class NametagHandler implements Listener {
             }
 
             groupData.setSortPriority(priority);
-            abstractConfig.save(groupData);
+            this.abstractConfig.save(groupData);
         }
     }
 
-    public void save(String targetName, NametagEvent.ChangeType changeType, String value) {
-        save(null, targetName, changeType, value);
+    public void save(final String targetName, final NametagEvent.ChangeType changeType, final String value) {
+        this.save(null, targetName, changeType, value);
     }
 
     // Reduces checks to have this method (ie not saving data twice)
-    public void save(String targetName, String prefix, String suffix) {
-        Player player = Bukkit.getPlayerExact(targetName);
+    public void save(final String targetName, final String prefix, final String suffix) {
+        final Player player = Bukkit.getPlayerExact(targetName);
 
-        PlayerData data = getPlayerData(player);
+        PlayerData data = this.getPlayerData(player);
         if (data == null) {
             data = new PlayerData(targetName, null, "", "", -1);
             if (player != null) {
-                storePlayerData(player.getUniqueId(), data);
+                this.storePlayerData(player.getUniqueId(), data);
             }
         }
 
@@ -470,30 +469,30 @@ public class NametagHandler implements Listener {
         data.setSuffix(suffix);
 
         if (player != null) {
-            applyTagToPlayer(player, false);
+            this.applyTagToPlayer(player, false);
             data.setUuid(player.getUniqueId());
-            abstractConfig.save(data);
+            this.abstractConfig.save(data);
             return;
         }
 
         final PlayerData finalData = data;
-        UUIDFetcher.lookupUUID(targetName, plugin, (uuid) -> {
+        UUIDFetcher.lookupUUID(targetName, this.plugin, uuid -> {
             if (uuid != null) {
-                storePlayerData(uuid, finalData);
+                this.storePlayerData(uuid, finalData);
                 finalData.setUuid(uuid);
-                abstractConfig.save(finalData);
+                this.abstractConfig.save(finalData);
             }
         });
     }
 
-    void save(final CommandSender sender, String targetName, NametagEvent.ChangeType changeType, String value) {
-        Player player = Bukkit.getPlayerExact(targetName);
+    void save(final CommandSender sender, final String targetName, final NametagEvent.ChangeType changeType, final String value) {
+        final Player player = Bukkit.getPlayerExact(targetName);
 
-        PlayerData data = getPlayerData(player);
+        PlayerData data = this.getPlayerData(player);
         if (data == null) {
             data = new PlayerData(targetName, null, "", "", -1);
             if (player != null) {
-                storePlayerData(player.getUniqueId(), data);
+                this.storePlayerData(player.getUniqueId(), data);
             }
         }
 
@@ -504,24 +503,22 @@ public class NametagHandler implements Listener {
         }
 
         if (player != null) {
-            applyTagToPlayer(player, false);
+            this.applyTagToPlayer(player, false);
             data.setUuid(player.getUniqueId());
-            abstractConfig.save(data);
+            this.abstractConfig.save(data);
             return;
         }
 
         final PlayerData finalData = data;
-        UUIDFetcher.lookupUUID(targetName, plugin, (uuid) -> {
+        UUIDFetcher.lookupUUID(targetName, this.plugin, uuid -> {
             if (uuid == null && sender != null) { // null is passed in api
                 NametagMessages.UUID_LOOKUP_FAILED.send(sender);
-            }
-            else {
-                storePlayerData(uuid, finalData);
+            } else {
+                this.storePlayerData(uuid, finalData);
                 finalData.setUuid(uuid);
-                abstractConfig.save(finalData);
+                this.abstractConfig.save(finalData);
             }
         });
     }
-
 
 }

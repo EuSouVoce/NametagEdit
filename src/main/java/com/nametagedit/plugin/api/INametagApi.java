@@ -1,11 +1,12 @@
 package com.nametagedit.plugin.api;
 
+import java.util.List;
+
+import org.bukkit.entity.Player;
+
 import com.nametagedit.plugin.api.data.FakeTeam;
 import com.nametagedit.plugin.api.data.GroupData;
 import com.nametagedit.plugin.api.data.Nametag;
-import org.bukkit.entity.Player;
-
-import java.util.List;
 
 /**
  *
@@ -13,8 +14,7 @@ import java.util.List;
 public interface INametagApi {
 
     /**
-     * Function gets the fake team data for
-     * player.
+     * Function gets the fake team data for player.
      *
      * @param player the player to check
      * @return the fake team
@@ -22,8 +22,8 @@ public interface INametagApi {
     FakeTeam getFakeTeam(Player player);
 
     /**
-     * Function gets the nametag for a player if
-     * it exists. This will never return a null.
+     * Function gets the nametag for a player if it exists. This will never return a
+     * null.
      *
      * @param player the player to check
      * @return the nametag for the player
@@ -31,20 +31,17 @@ public interface INametagApi {
     Nametag getNametag(Player player);
 
     /**
-     * Removes a player's nametag in memory
-     * only.
+     * Removes a player's nametag in memory only.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player whose nametag to clear
      */
     void clearNametag(Player player);
 
     /**
-     * Reloads a nametag if the player has a
-     * custom nametag via the Players or Groups
-     * configurations.
+     * Reloads a nametag if the player has a custom nametag via the Players or
+     * Groups configurations.
      * <p>
      *
      * @param player whose nametag to reload
@@ -52,22 +49,18 @@ public interface INametagApi {
     void reloadNametag(Player player);
 
     /**
-     * Removes a player's nametag in memory
-     * only.
+     * Removes a player's nametag in memory only.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player whose nametag to clear
      */
     void clearNametag(String player);
 
     /**
-     * Sets the prefix for a player. The previous
-     * suffix is kept if it exists.
+     * Sets the prefix for a player. The previous suffix is kept if it exists.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player the player whose nametag to change
      * @param prefix the prefix to change to
@@ -75,11 +68,9 @@ public interface INametagApi {
     void setPrefix(Player player, String prefix);
 
     /**
-     * Sets the suffix for a player. The previous
-     * prefix is kept if it exists.
+     * Sets the suffix for a player. The previous prefix is kept if it exists.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player the player whose nametag to change
      * @param suffix the suffix to change to
@@ -87,11 +78,9 @@ public interface INametagApi {
     void setSuffix(Player player, String suffix);
 
     /**
-     * Sets the prefix for a player. The previous
-     * suffix is kept if it exists.
+     * Sets the prefix for a player. The previous suffix is kept if it exists.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player the player whose nametag to change
      * @param prefix the prefix to change to
@@ -99,11 +88,9 @@ public interface INametagApi {
     void setPrefix(String player, String prefix);
 
     /**
-     * Sets the suffix for a player. The previous
-     * prefix is kept if it exists.
+     * Sets the suffix for a player. The previous prefix is kept if it exists.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player the player whose nametag to change
      * @param suffix the suffix to change to
@@ -113,8 +100,7 @@ public interface INametagApi {
     /**
      * Sets the nametag for a player.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player the player whose nametag to change
      * @param prefix the prefix to change to
@@ -125,8 +111,7 @@ public interface INametagApi {
     /**
      * Sets the nametag for a player.
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      *
      * @param player the player whose nametag to change
      * @param prefix the prefix to change to
@@ -136,37 +121,42 @@ public interface INametagApi {
 
     /**
      * Hide the name above the head
+     * 
      * @param player the player whose nametag to hide
      */
     void hideNametag(Player player);
 
     /**
      * Hide the name above the head
+     * 
      * @param player he player whose nametag to hide
      */
     void hideNametag(String player);
 
     /**
      * Show the name above the head
+     * 
      * @param player he player whose nametag to show
      */
     void showNametag(Player player);
 
     /**
      * Show the name above the head
+     * 
      * @param player he player whose nametag to show
      */
     void showNametag(String player);
 
     /**
      * Gets the data of all groups
+     * 
      * @return list containing all group data
      */
     List<GroupData> getGroupData();
 
-
     /**
      * Saves the provided group data
+     * 
      * @param groupData the group data to save
      */
     void saveGroupData(GroupData... groupData);
@@ -174,8 +164,7 @@ public interface INametagApi {
     /**
      * Applies tags to all players
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage.
+     * Note: Only affects memory, does NOT add/remove from storage.
      * </p>
      */
     void applyTags();
@@ -183,10 +172,10 @@ public interface INametagApi {
     /**
      * Applies tags to specific player
      * <p>
-     * Note: Only affects memory, does NOT
-     * add/remove from storage
+     * Note: Only affects memory, does NOT add/remove from storage
      * </p>
-     * @param player the player to apply nametag to
+     * 
+     * @param player   the player to apply nametag to
      * @param loggedIn is the player logged in
      */
     void applyTagToPlayer(Player player, boolean loggedIn);
@@ -194,9 +183,10 @@ public interface INametagApi {
     /**
      * Updates a players prefix
      * <p>
-     * Note: Does affect memory. Automatically applies tags to player
-     * so no applyTags call is necessary
+     * Note: Does affect memory. Automatically applies tags to player so no
+     * applyTags call is necessary
      * </p>
+     * 
      * @param target name of the player to update tag of
      * @param prefix prefix to change to
      */
@@ -205,9 +195,10 @@ public interface INametagApi {
     /**
      * Updates a players suffix
      * <p>
-     * Note: Does affect memory. Automatically applies tags to player
-     * so no applyTags call is necessary
+     * Note: Does affect memory. Automatically applies tags to player so no
+     * applyTags call is necessary
      * </p>
+     * 
      * @param target name of the player to update tag of
      * @param suffix suffix to change to
      */
@@ -216,9 +207,10 @@ public interface INametagApi {
     /**
      * Updates a players nametag
      * <p>
-     * Note: Does affect memory. Automatically applies tags to player
-     * so no applyTags call is necessary
+     * Note: Does affect memory. Automatically applies tags to player so no
+     * applyTags call is necessary
      * </p>
+     * 
      * @param target name of the player to update tag of
      * @param prefix prefix to set to
      * @param suffix suffix to set to

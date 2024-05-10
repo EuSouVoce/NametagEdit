@@ -1,15 +1,17 @@
 package com.nametagedit.plugin.storage.database.tasks;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import org.bukkit.scheduler.BukkitRunnable;
+
 import com.nametagedit.plugin.api.data.GroupData;
 import com.nametagedit.plugin.storage.database.DatabaseConfig;
 import com.nametagedit.plugin.utils.Utils;
 import com.zaxxer.hikari.HikariDataSource;
-import lombok.AllArgsConstructor;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class GroupSaver extends BukkitRunnable {
@@ -19,11 +21,12 @@ public class GroupSaver extends BukkitRunnable {
 
     @Override
     public void run() {
-        try (Connection connection = hikari.getConnection()) {
-            final String QUERY = "UPDATE " + DatabaseConfig.TABLE_GROUPS + " SET `prefix`=?, `suffix`=?, `permission`=?, `priority`=? WHERE `name`=?";
-            PreparedStatement update = connection.prepareStatement(QUERY);
+        try (Connection connection = this.hikari.getConnection()) {
+            final String QUERY = "UPDATE " + DatabaseConfig.TABLE_GROUPS
+                    + " SET `prefix`=?, `suffix`=?, `permission`=?, `priority`=? WHERE `name`=?";
+            final PreparedStatement update = connection.prepareStatement(QUERY);
 
-            for (GroupData groupData : this.groupData) {
+            for (final GroupData groupData : this.groupData) {
                 update.setString(1, Utils.deformat(groupData.getPrefix()));
                 update.setString(2, Utils.deformat(groupData.getSuffix()));
                 update.setString(3, groupData.getPermission());
@@ -34,7 +37,7 @@ public class GroupSaver extends BukkitRunnable {
 
             update.executeBatch();
             update.close();
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
         }
     }

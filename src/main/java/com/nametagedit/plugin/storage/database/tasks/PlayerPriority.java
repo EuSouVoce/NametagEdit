@@ -1,14 +1,16 @@
 package com.nametagedit.plugin.storage.database.tasks;
 
-import com.nametagedit.plugin.storage.database.DatabaseConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import lombok.AllArgsConstructor;
-import org.bukkit.scheduler.BukkitRunnable;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.UUID;
+
+import org.bukkit.scheduler.BukkitRunnable;
+
+import com.nametagedit.plugin.storage.database.DatabaseConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class PlayerPriority extends BukkitRunnable {
@@ -19,13 +21,14 @@ public class PlayerPriority extends BukkitRunnable {
 
     @Override
     public void run() {
-        try (Connection connection = hikari.getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement("UPDATE " + DatabaseConfig.TABLE_PLAYERS + " SET `priority`=? WHERE `uuid`=?");
-            preparedStatement.setInt(1, priority);
-            preparedStatement.setString(2, player.toString());
+        try (Connection connection = this.hikari.getConnection()) {
+            final PreparedStatement preparedStatement = connection
+                    .prepareStatement("UPDATE " + DatabaseConfig.TABLE_PLAYERS + " SET `priority`=? WHERE `uuid`=?");
+            preparedStatement.setInt(1, this.priority);
+            preparedStatement.setString(2, this.player.toString());
             preparedStatement.execute();
             preparedStatement.close();
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
         }
     }

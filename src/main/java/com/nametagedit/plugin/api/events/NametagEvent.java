@@ -1,15 +1,16 @@
 package com.nametagedit.plugin.api.events;
 
-import com.nametagedit.plugin.api.data.Nametag;
-import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+import com.nametagedit.plugin.api.data.Nametag;
+
+import lombok.Getter;
+import lombok.Setter;
+
 /**
- * This class represents an Event that is fired when a
- * nametag is changed.
+ * This class represents an Event that is fired when a nametag is changed.
  */
 public class NametagEvent extends Event implements Cancellable {
 
@@ -42,24 +43,23 @@ public class NametagEvent extends Event implements Cancellable {
     @Setter
     private StorageType storageType;
 
-    public NametagEvent(String player, String value) {
-        this(player, value, ChangeType.UNKNOWN);
-    }
+    public NametagEvent(final String player, final String value) { this(player, value, ChangeType.UNKNOWN); }
 
-    public NametagEvent(String player, String value, Nametag nametag, ChangeType type) {
+    public NametagEvent(final String player, final String value, final Nametag nametag, final ChangeType type) {
         this(player, value, type);
         this.nametag = nametag;
     }
 
-    public NametagEvent(String player, String value, ChangeType changeType) {
+    public NametagEvent(final String player, final String value, final ChangeType changeType) {
         this(player, value, changeType, StorageType.MEMORY, ChangeReason.UNKNOWN);
     }
 
-    public NametagEvent(String player, String value, ChangeType changeType, ChangeReason changeReason) {
+    public NametagEvent(final String player, final String value, final ChangeType changeType, final ChangeReason changeReason) {
         this(player, value, changeType, StorageType.MEMORY, changeReason);
     }
 
-    public NametagEvent(String player, String value, ChangeType changeType, StorageType storageType, ChangeReason changeReason) {
+    public NametagEvent(final String player, final String value, final ChangeType changeType, final StorageType storageType,
+            final ChangeReason changeReason) {
         this.player = player;
         this.value = value;
         this.changeType = changeType;
@@ -67,24 +67,16 @@ public class NametagEvent extends Event implements Cancellable {
         this.changeReason = changeReason;
     }
 
-    public static HandlerList getHandlerList() {
-        return HANDLERS;
-    }
+    public static HandlerList getHandlerList() { return NametagEvent.HANDLERS; }
 
     @Override
-    public HandlerList getHandlers() {
-        return HANDLERS;
-    }
+    public HandlerList getHandlers() { return NametagEvent.HANDLERS; }
 
     @Override
-    public boolean isCancelled() {
-        return cancelled;
-    }
+    public boolean isCancelled() { return this.cancelled; }
 
     @Override
-    public void setCancelled(boolean cancelled) {
-        this.cancelled = cancelled;
-    }
+    public void setCancelled(final boolean cancelled) { this.cancelled = cancelled; }
 
     public enum ChangeReason {
         API, PLUGIN, UNKNOWN

@@ -1,16 +1,16 @@
 package com.nametagedit.plugin.storage;
 
-import com.nametagedit.plugin.api.data.GroupData;
-import com.nametagedit.plugin.api.data.PlayerData;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
 import java.util.List;
 import java.util.UUID;
 
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import com.nametagedit.plugin.api.data.GroupData;
+import com.nametagedit.plugin.api.data.PlayerData;
+
 /**
- * This is responsible for abstracting
- * a database/flat file storage
+ * This is responsible for abstracting a database/flat file storage
  */
 public interface AbstractConfig {
 

@@ -21,11 +21,11 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PlayerLoader extends BukkitRunnable {
 
-    private UUID uuid;
-    private Plugin plugin;
-    private NametagHandler handler;
-    private HikariDataSource hikari;
-    private boolean loggedIn;
+    private final UUID uuid;
+    private final Plugin plugin;
+    private final NametagHandler handler;
+    private final HikariDataSource hikari;
+    private final boolean loggedIn;
 
     @Override
     public void run() {
@@ -34,13 +34,13 @@ public class PlayerLoader extends BukkitRunnable {
         int priority = -1;
         boolean found = false;
 
-        try (Connection connection = hikari.getConnection()) {
+        try (Connection connection = this.hikari.getConnection()) {
             final String QUERY = "SELECT `prefix`, `suffix`, `priority` FROM " + DatabaseConfig.TABLE_PLAYERS + " WHERE `uuid`=?";
 
             try (PreparedStatement select = connection.prepareStatement(QUERY)) {
-                select.setString(1, uuid.toString());
+                select.setString(1, this.uuid.toString());
 
-                ResultSet resultSet = select.executeQuery();
+                final ResultSet resultSet = select.executeQuery();
                 if (resultSet.next()) {
                     tempPrefix = resultSet.getString("prefix");
                     tempSuffix = resultSet.getString("suffix");
@@ -50,7 +50,7 @@ public class PlayerLoader extends BukkitRunnable {
 
                 resultSet.close();
             }
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             e.printStackTrace();
         } finally {
             final String prefix = tempPrefix == null ? "" : tempPrefix;
@@ -61,23 +61,23 @@ public class PlayerLoader extends BukkitRunnable {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    Player player = Bukkit.getPlayer(uuid);
+                    final Player player = Bukkit.getPlayer(PlayerLoader.this.uuid);
                     if (player != null) {
                         if (finalFound) {
-                            PlayerData data = handler.getPlayerData(player);
+                            PlayerData data = PlayerLoader.this.handler.getPlayerData(player);
                             if (data == null) {
                                 data = new PlayerData(player.getName(), player.getUniqueId(), prefix, suffix, finalPriority);
-                                handler.storePlayerData(player.getUniqueId(), data);
+                                PlayerLoader.this.handler.storePlayerData(player.getUniqueId(), data);
                             } else {
                                 data.setPrefix(prefix);
                                 data.setSuffix(suffix);
                             }
                         }
 
-                        handler.applyTagToPlayer(player, loggedIn);
+                        PlayerLoader.this.handler.applyTagToPlayer(player, PlayerLoader.this.loggedIn);
                     }
                 }
-            }.runTask(plugin);
+            }.runTask(this.plugin);
         }
     }
 

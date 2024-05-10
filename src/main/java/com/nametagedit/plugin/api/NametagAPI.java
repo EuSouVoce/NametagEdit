@@ -1,20 +1,22 @@
 package com.nametagedit.plugin.api;
 
+import java.util.List;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
 import com.nametagedit.plugin.NametagHandler;
 import com.nametagedit.plugin.NametagManager;
 import com.nametagedit.plugin.api.data.FakeTeam;
 import com.nametagedit.plugin.api.data.GroupData;
 import com.nametagedit.plugin.api.data.Nametag;
 import com.nametagedit.plugin.api.events.NametagEvent;
-import lombok.AllArgsConstructor;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
-import java.util.List;
+import lombok.AllArgsConstructor;
 
 /**
- * Implements the INametagAPI interface. There only
- * exists one instance of this class.
+ * Implements the INametagAPI interface. There only exists one instance of this
+ * class.
  */
 @AllArgsConstructor
 public final class NametagAPI implements INametagApi {
@@ -23,134 +25,124 @@ public final class NametagAPI implements INametagApi {
     private final NametagManager manager;
 
     @Override
-    public FakeTeam getFakeTeam(Player player) {
-        return manager.getFakeTeam(player.getName());
-    }
+    public FakeTeam getFakeTeam(final Player player) { return this.manager.getFakeTeam(player.getName()); }
 
     @Override
-    public Nametag getNametag(Player player) {
-        FakeTeam team = manager.getFakeTeam(player.getName());
-        boolean nullTeam = team == null;
+    public Nametag getNametag(final Player player) {
+        final FakeTeam team = this.manager.getFakeTeam(player.getName());
+        final boolean nullTeam = team == null;
         return new Nametag(nullTeam ? "" : team.getPrefix(), nullTeam ? "" : team.getSuffix());
     }
 
     @Override
-    public void clearNametag(Player player) {
-        if (shouldFireEvent(player, NametagEvent.ChangeType.CLEAR)) {
-            manager.reset(player.getName());
+    public void clearNametag(final Player player) {
+        if (this.shouldFireEvent(player, NametagEvent.ChangeType.CLEAR)) {
+            this.manager.reset(player.getName());
         }
     }
 
     @Override
-    public void reloadNametag(Player player) {
-        if (shouldFireEvent(player, NametagEvent.ChangeType.RELOAD)) {
-            handler.applyTagToPlayer(player, false);
+    public void reloadNametag(final Player player) {
+        if (this.shouldFireEvent(player, NametagEvent.ChangeType.RELOAD)) {
+            this.handler.applyTagToPlayer(player, false);
         }
     }
 
     @Override
-    public void clearNametag(String player) {
-        manager.reset(player);
+    public void clearNametag(final String player) { this.manager.reset(player); }
+
+    @Override
+    public void setPrefix(final Player player, final String prefix) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player.getName());
+        this.setNametagAlt(player, prefix, fakeTeam == null ? null : fakeTeam.getSuffix());
     }
 
     @Override
-    public void setPrefix(Player player, String prefix) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player.getName());
-        setNametagAlt(player, prefix, fakeTeam == null ? null : fakeTeam.getSuffix());
+    public void setSuffix(final Player player, final String suffix) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player.getName());
+        this.setNametagAlt(player, fakeTeam == null ? null : fakeTeam.getPrefix(), suffix);
     }
 
     @Override
-    public void setSuffix(Player player, String suffix) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player.getName());
-        setNametagAlt(player, fakeTeam == null ? null : fakeTeam.getPrefix(), suffix);
+    public void setPrefix(final String player, final String prefix) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player);
+        this.manager.setNametag(player, prefix, fakeTeam == null ? null : fakeTeam.getSuffix());
     }
 
     @Override
-    public void setPrefix(String player, String prefix) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player);
-        manager.setNametag(player, prefix, fakeTeam == null ? null : fakeTeam.getSuffix());
+    public void setSuffix(final String player, final String suffix) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player);
+        this.manager.setNametag(player, fakeTeam == null ? null : fakeTeam.getPrefix(), suffix);
     }
 
     @Override
-    public void setSuffix(String player, String suffix) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player);
-        manager.setNametag(player, fakeTeam == null ? null : fakeTeam.getPrefix(), suffix);
+    public void setNametag(final Player player, final String prefix, final String suffix) { this.setNametagAlt(player, prefix, suffix); }
+
+    @Override
+    public void setNametag(final String player, final String prefix, final String suffix) {
+        this.manager.setNametag(player, prefix, suffix);
     }
 
     @Override
-    public void setNametag(Player player, String prefix, String suffix) {
-        setNametagAlt(player, prefix, suffix);
+    public void hideNametag(final Player player) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player.getName());
+        this.manager.setNametag(player.getName(), fakeTeam == null ? null : fakeTeam.getPrefix(),
+                fakeTeam == null ? null : fakeTeam.getSuffix(), false);
     }
 
     @Override
-    public void setNametag(String player, String prefix, String suffix) {
-        manager.setNametag(player, prefix, suffix);
+    public void hideNametag(final String player) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player);
+        this.manager.setNametag(player, fakeTeam == null ? null : fakeTeam.getPrefix(), fakeTeam == null ? null : fakeTeam.getSuffix(),
+                false);
     }
 
     @Override
-    public void hideNametag(Player player) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player.getName());
-        manager.setNametag(player.getName(), fakeTeam == null ? null : fakeTeam.getPrefix(), fakeTeam == null ? null : fakeTeam.getSuffix(), false);
+    public void showNametag(final Player player) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player.getName());
+        this.manager.setNametag(player.getName(), fakeTeam == null ? null : fakeTeam.getPrefix(),
+                fakeTeam == null ? null : fakeTeam.getSuffix(), true);
     }
 
     @Override
-    public void hideNametag(String player) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player);
-        manager.setNametag(player, fakeTeam == null ? null : fakeTeam.getPrefix(), fakeTeam == null ? null : fakeTeam.getSuffix(), false);
+    public void showNametag(final String player) {
+        final FakeTeam fakeTeam = this.manager.getFakeTeam(player);
+        this.manager.setNametag(player, fakeTeam == null ? null : fakeTeam.getPrefix(), fakeTeam == null ? null : fakeTeam.getSuffix(),
+                true);
     }
 
     @Override
-    public void showNametag(Player player) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player.getName());
-        manager.setNametag(player.getName(), fakeTeam == null ? null : fakeTeam.getPrefix(), fakeTeam == null ? null : fakeTeam.getSuffix(), true);
+    public List<GroupData> getGroupData() { return this.handler.getGroupData(); }
+
+    @Override
+    public void saveGroupData(final GroupData... groupData) { this.handler.getAbstractConfig().save(groupData); }
+
+    @Override
+    public void applyTags() { this.handler.applyTags(); }
+
+    @Override
+    public void applyTagToPlayer(final Player player, final boolean loggedIn) { this.handler.applyTagToPlayer(player, loggedIn); }
+
+    @Override
+    public void updatePlayerPrefix(final String target, final String prefix) {
+        this.handler.save(target, NametagEvent.ChangeType.PREFIX, prefix);
     }
 
     @Override
-    public void showNametag(String player) {
-        FakeTeam fakeTeam = manager.getFakeTeam(player);
-        manager.setNametag(player, fakeTeam == null ? null : fakeTeam.getPrefix(), fakeTeam == null ? null : fakeTeam.getSuffix(), true);
+    public void updatePlayerSuffix(final String target, final String suffix) {
+        this.handler.save(target, NametagEvent.ChangeType.SUFFIX, suffix);
     }
 
     @Override
-    public List<GroupData> getGroupData() {
-        return handler.getGroupData();
-    }
-
-    @Override
-    public void saveGroupData(GroupData... groupData) {
-        handler.getAbstractConfig().save(groupData);
-    }
-
-    @Override
-    public void applyTags() {
-        handler.applyTags();
-    }
-
-    @Override
-    public void applyTagToPlayer(Player player, boolean loggedIn) {
-        handler.applyTagToPlayer(player,loggedIn);
-    }
-
-    @Override
-    public void updatePlayerPrefix(String target, String prefix) {
-        handler.save(target, NametagEvent.ChangeType.PREFIX, prefix);
-    }
-
-    @Override
-    public void updatePlayerSuffix(String target, String suffix) {
-        handler.save(target, NametagEvent.ChangeType.SUFFIX, suffix);
-    }
-
-    @Override
-    public void updatePlayerNametag(String target, String prefix, String suffix) {
-        handler.save(target, prefix, suffix);
+    public void updatePlayerNametag(final String target, final String prefix, final String suffix) {
+        this.handler.save(target, prefix, suffix);
     }
 
     /**
      * Private helper function to reduce redundancy
      */
-    private boolean shouldFireEvent(Player player, NametagEvent.ChangeType type) {
-        NametagEvent event = new NametagEvent(player.getName(), "", getNametag(player), type);
+    private boolean shouldFireEvent(final Player player, final NametagEvent.ChangeType type) {
+        final NametagEvent event = new NametagEvent(player.getName(), "", this.getNametag(player), type);
         Bukkit.getPluginManager().callEvent(event);
         return !event.isCancelled();
     }
@@ -158,16 +150,15 @@ public final class NametagAPI implements INametagApi {
     /**
      * Private helper function to reduce redundancy
      */
-    private void setNametagAlt(Player player, String prefix, String suffix) {
-        Nametag nametag = new Nametag(
-                handler.formatWithPlaceholders(player, prefix, true),
-                handler.formatWithPlaceholders(player, suffix, true)
-        );
+    private void setNametagAlt(final Player player, final String prefix, final String suffix) {
+        final Nametag nametag = new Nametag(this.handler.formatWithPlaceholders(player, prefix, true),
+                this.handler.formatWithPlaceholders(player, suffix, true));
 
-        NametagEvent event = new NametagEvent(player.getName(), prefix, nametag, NametagEvent.ChangeType.UNKNOWN);
+        final NametagEvent event = new NametagEvent(player.getName(), prefix, nametag, NametagEvent.ChangeType.UNKNOWN);
         Bukkit.getPluginManager().callEvent(event);
-        if (event.isCancelled()) return;
-        manager.setNametag(player.getName(), nametag.getPrefix(), nametag.getSuffix());
+        if (event.isCancelled())
+            return;
+        this.manager.setNametag(player.getName(), nametag.getPrefix(), nametag.getSuffix());
     }
 
 }

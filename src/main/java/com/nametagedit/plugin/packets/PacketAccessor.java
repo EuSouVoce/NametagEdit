@@ -12,10 +12,17 @@ import java.util.stream.Stream;
 
 class PacketAccessor {
 
-    protected static final String VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-    protected static final int MINOR_VERSION = Integer.parseInt(VERSION.split("_")[1]);
+    protected static String VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
 
-    private static final List<String> legacyVersions = Arrays.asList("v1_7_R1", "v1_7_R2", "v1_7_R3", "v1_7_R4", "v1_8_R1", "v1_8_R2", "v1_8_R3", "v1_9_R1", "v1_9_R2", "v1_10_R1", "v1_11_R1", "v1_12_R1");
+    static {
+        if (Bukkit.getBukkitVersion().contains("1.20.6")) {
+            PacketAccessor.VERSION = "v1_20_R6";
+        }
+    }
+    protected static final int MINOR_VERSION = Integer.parseInt(PacketAccessor.VERSION.split("_")[1]);
+
+    private static final List<String> legacyVersions = Arrays.asList("v1_7_R1", "v1_7_R2", "v1_7_R3", "v1_7_R4", "v1_8_R1", "v1_8_R2",
+            "v1_8_R3", "v1_9_R1", "v1_9_R2", "v1_10_R1", "v1_11_R1", "v1_12_R1");
     private static boolean CAULDRON_SERVER = false;
     private static boolean LEGACY_SERVER = false;
 
@@ -46,148 +53,162 @@ class PacketAccessor {
     static {
         try {
             Class.forName("cpw.mods.fml.common.Mod");
-            CAULDRON_SERVER = true;
-        } catch (ClassNotFoundException ignored) {
+            PacketAccessor.CAULDRON_SERVER = true;
+        } catch (final ClassNotFoundException ignored) {
             // This is not a cauldron server
         }
 
         try {
-            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-            Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+            final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            final Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
             theUnsafeField.setAccessible(true);
-            UNSAFE = theUnsafeField.get(null);
-            ALLOCATE_INSTANCE = UNSAFE.getClass().getMethod("allocateInstance", Class.class);
+            PacketAccessor.UNSAFE = theUnsafeField.get(null);
+            PacketAccessor.ALLOCATE_INSTANCE = PacketAccessor.UNSAFE.getClass().getMethod("allocateInstance", Class.class);
 
-            if (legacyVersions.contains(VERSION))
-                LEGACY_SERVER = true;
+            if (PacketAccessor.legacyVersions.contains(PacketAccessor.VERSION))
+                PacketAccessor.LEGACY_SERVER = true;
 
-            Class<?> typeCraftPlayer = Class.forName("org.bukkit.craftbukkit." + VERSION + ".entity.CraftPlayer");
-            getHandle = typeCraftPlayer.getMethod("getHandle");
+            final Class<?> typeCraftPlayer = Class.forName("org.bukkit.craftbukkit." + PacketAccessor.VERSION + ".entity.CraftPlayer");
+            PacketAccessor.getHandle = typeCraftPlayer.getMethod("getHandle");
 
-            if (CAULDRON_SERVER) {
-                packetClass = Class.forName("net.minecraft.server.v1_7_R4.PacketPlayOutScoreboardTeam");
-                Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.v1_7_R4.EntityPlayer");
-                Class<?> typePlayerConnection = Class.forName("net.minecraft.server.v1_7_R4.PlayerConnection");
-                playerConnection = typeNMSPlayer.getField("field_71135_a");
-                sendPacket = typePlayerConnection.getMethod("func_147359_a", Class.forName("net.minecraft.server.v1_7_R4.Packet"));
-            } else if (!isParamsVersion()) {
-                packetClass = Class.forName("net.minecraft.server." + VERSION + ".PacketPlayOutScoreboardTeam");
-                Class<?> typeNMSPlayer = Class.forName("net.minecraft.server." + VERSION + ".EntityPlayer");
-                Class<?> typePlayerConnection = Class.forName("net.minecraft.server." + VERSION + ".PlayerConnection");
-                playerConnection = typeNMSPlayer.getField("playerConnection");
-                sendPacket = typePlayerConnection.getMethod("sendPacket", Class.forName("net.minecraft.server." + VERSION + ".Packet"));
+            if (PacketAccessor.CAULDRON_SERVER) {
+                PacketAccessor.packetClass = Class.forName("net.minecraft.server.v1_7_R4.PacketPlayOutScoreboardTeam");
+                final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.v1_7_R4.EntityPlayer");
+                final Class<?> typePlayerConnection = Class.forName("net.minecraft.server.v1_7_R4.PlayerConnection");
+                PacketAccessor.playerConnection = typeNMSPlayer.getField("field_71135_a");
+                PacketAccessor.sendPacket = typePlayerConnection.getMethod("func_147359_a",
+                        Class.forName("net.minecraft.server.v1_7_R4.Packet"));
+            } else if (!PacketAccessor.isParamsVersion()) {
+                PacketAccessor.packetClass = Class
+                        .forName("net.minecraft.server." + PacketAccessor.VERSION + ".PacketPlayOutScoreboardTeam");
+                final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server." + PacketAccessor.VERSION + ".EntityPlayer");
+                final Class<?> typePlayerConnection = Class.forName("net.minecraft.server." + PacketAccessor.VERSION + ".PlayerConnection");
+                PacketAccessor.playerConnection = typeNMSPlayer.getField("playerConnection");
+                PacketAccessor.sendPacket = typePlayerConnection.getMethod("sendPacket",
+                        Class.forName("net.minecraft.server." + PacketAccessor.VERSION + ".Packet"));
+            } else if (PacketAccessor.MINOR_VERSION > 20 && PacketAccessor.VERSION == "v1_20_R6") {
+                PacketAccessor.packetClass = Class.forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket");
+                PacketAccessor.packetParamsClass = Class
+                        .forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket$Parameters");
+                final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.level.ServerPlayer");
+                final Class<?> typePlayerConnection = Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl");
+                PacketAccessor.playerConnection = typeNMSPlayer.getField("connection");
+                final Class<?>[] sendPacketParameters = new Class[] { Class.forName("net.minecraft.network.protocol.Packet") };
+                // 1.20.2+ priority to sending
+                PacketAccessor.sendPacket = Stream
+                        .concat(Arrays.stream(typePlayerConnection.getSuperclass().getMethods()),
+                                Arrays.stream(typePlayerConnection.getMethods()))
+                        .filter(method -> Arrays.equals(method.getParameterTypes(), sendPacketParameters)).findFirst()
+                        .orElseThrow(NoSuchMethodException::new);
             } else {
                 // 1.17+
-                packetClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam");
-                packetParamsClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam$b");
-                Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.level.EntityPlayer");
-                Class<?> typePlayerConnection = Class.forName("net.minecraft.server.network.PlayerConnection");
-                if (MINOR_VERSION >= 20) {
+                PacketAccessor.packetClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam");
+                PacketAccessor.packetParamsClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam$b");
+                final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.level.EntityPlayer");
+                final Class<?> typePlayerConnection = Class.forName("net.minecraft.server.network.PlayerConnection");
+                if (PacketAccessor.MINOR_VERSION >= 20) {
                     // 1.20
-                    playerConnection = typeNMSPlayer.getField("c");
+                    PacketAccessor.playerConnection = typeNMSPlayer.getField("c");
                 } else {
                     // 1.17-1.19
-                    playerConnection = typeNMSPlayer.getField("b");
+                    PacketAccessor.playerConnection = typeNMSPlayer.getField("b");
                 }
-                Class<?>[] sendPacketParameters = new Class[]{Class.forName("net.minecraft.network.protocol.Packet")};
-                sendPacket = Stream.concat(
-                                Arrays.stream(typePlayerConnection.getSuperclass().getMethods()), // 1.20.2+ priority to packet sending
-                                Arrays.stream(typePlayerConnection.getMethods())
-                        )
-                        .filter(method -> Arrays.equals(method.getParameterTypes(), sendPacketParameters))
-                        .findFirst().orElseThrow(NoSuchMethodException::new);
+                final Class<?>[] sendPacketParameters = new Class[] { Class.forName("net.minecraft.network.protocol.Packet") };
+                PacketAccessor.sendPacket = Stream.concat(Arrays.stream(typePlayerConnection.getSuperclass().getMethods()), // 1.20.2+
+                                                                                                                            // priority to
+                                                                                                                            // packet
+                        // sending
+                        Arrays.stream(typePlayerConnection.getMethods()))
+                        .filter(method -> Arrays.equals(method.getParameterTypes(), sendPacketParameters)).findFirst()
+                        .orElseThrow(NoSuchMethodException::new);
             }
 
             PacketData currentVersion = null;
-            for (PacketData packetData : PacketData.values()) {
-                if (VERSION.contains(packetData.name())) {
-                    currentVersion = packetData;
+            if (PacketAccessor.VERSION == "v1_20_R6") {
+                currentVersion = PacketData.v1_20_6;
+            } else
+                for (final PacketData packetData : PacketData.values()) {
+                    if (PacketAccessor.VERSION.contains(packetData.name())) {
+                        currentVersion = packetData;
+                    }
                 }
-            }
 
-            if (CAULDRON_SERVER) {
+            if (PacketAccessor.CAULDRON_SERVER) {
                 currentVersion = PacketData.cauldron;
             }
 
             if (currentVersion != null) {
-                if (!isParamsVersion()) {
-                    PREFIX = getNMS(currentVersion.getPrefix());
-                    SUFFIX = getNMS(currentVersion.getSuffix());
-                    MEMBERS = getNMS(currentVersion.getMembers());
-                    TEAM_NAME = getNMS(currentVersion.getTeamName());
-                    PARAM_INT = getNMS(currentVersion.getParamInt());
-                    PACK_OPTION = getNMS(currentVersion.getPackOption());
-                    DISPLAY_NAME = getNMS(currentVersion.getDisplayName());
+                if (!PacketAccessor.isParamsVersion()) {
+                    PacketAccessor.PREFIX = PacketAccessor.getNMS(currentVersion.getPrefix());
+                    PacketAccessor.SUFFIX = PacketAccessor.getNMS(currentVersion.getSuffix());
+                    PacketAccessor.MEMBERS = PacketAccessor.getNMS(currentVersion.getMembers());
+                    PacketAccessor.TEAM_NAME = PacketAccessor.getNMS(currentVersion.getTeamName());
+                    PacketAccessor.PARAM_INT = PacketAccessor.getNMS(currentVersion.getParamInt());
+                    PacketAccessor.PACK_OPTION = PacketAccessor.getNMS(currentVersion.getPackOption());
+                    PacketAccessor.DISPLAY_NAME = PacketAccessor.getNMS(currentVersion.getDisplayName());
 
-                    if (!isLegacyVersion()) {
-                        TEAM_COLOR = getNMS(currentVersion.getColor());
+                    if (!PacketAccessor.isLegacyVersion()) {
+                        PacketAccessor.TEAM_COLOR = PacketAccessor.getNMS(currentVersion.getColor());
                     }
 
-                    if (isPushVersion()) {
-                        PUSH = getNMS(currentVersion.getPush());
+                    if (PacketAccessor.isPushVersion()) {
+                        PacketAccessor.PUSH = PacketAccessor.getNMS(currentVersion.getPush());
                     }
 
-                    if (isVisibilityVersion()) {
-                        VISIBILITY = getNMS(currentVersion.getVisibility());
+                    if (PacketAccessor.isVisibilityVersion()) {
+                        PacketAccessor.VISIBILITY = PacketAccessor.getNMS(currentVersion.getVisibility());
                     }
                 } else {
                     // 1.17+
-                    PARAM_INT = getNMS(currentVersion.getParamInt());
-                    TEAM_NAME = getNMS(currentVersion.getTeamName());
-                    MEMBERS = getNMS(currentVersion.getMembers());
-                    PARAMS = getNMS(currentVersion.getParams());
+                    PacketAccessor.PARAM_INT = PacketAccessor.getNMS(currentVersion.getParamInt());
+                    PacketAccessor.TEAM_NAME = PacketAccessor.getNMS(currentVersion.getTeamName());
+                    PacketAccessor.MEMBERS = PacketAccessor.getNMS(currentVersion.getMembers());
+                    PacketAccessor.PARAMS = PacketAccessor.getNMS(currentVersion.getParams());
 
-                    PREFIX = getParamNMS(currentVersion.getPrefix());
-                    SUFFIX = getParamNMS(currentVersion.getSuffix());
-                    PACK_OPTION = getParamNMS(currentVersion.getPackOption());
-                    DISPLAY_NAME = getParamNMS(currentVersion.getDisplayName());
-                    TEAM_COLOR = getParamNMS(currentVersion.getColor());
-                    PUSH = getParamNMS(currentVersion.getPush());
-                    VISIBILITY = getParamNMS(currentVersion.getVisibility());
+                    PacketAccessor.PREFIX = PacketAccessor.getParamNMS(currentVersion.getPrefix());
+                    PacketAccessor.SUFFIX = PacketAccessor.getParamNMS(currentVersion.getSuffix());
+                    PacketAccessor.PACK_OPTION = PacketAccessor.getParamNMS(currentVersion.getPackOption());
+                    PacketAccessor.DISPLAY_NAME = PacketAccessor.getParamNMS(currentVersion.getDisplayName());
+                    PacketAccessor.TEAM_COLOR = PacketAccessor.getParamNMS(currentVersion.getColor());
+                    PacketAccessor.PUSH = PacketAccessor.getParamNMS(currentVersion.getPush());
+                    PacketAccessor.VISIBILITY = PacketAccessor.getParamNMS(currentVersion.getVisibility());
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static boolean isLegacyVersion() {
-        return LEGACY_SERVER;
-    }
+    public static boolean isLegacyVersion() { return PacketAccessor.LEGACY_SERVER; }
 
-    public static boolean isParamsVersion() {
-        return MINOR_VERSION >= 17;
-    }
+    public static boolean isParamsVersion() { return PacketAccessor.MINOR_VERSION >= 17; }
 
-    private static boolean isPushVersion() {
-        return MINOR_VERSION >= 9;
-    }
+    private static boolean isPushVersion() { return PacketAccessor.MINOR_VERSION >= 9; }
 
-    private static boolean isVisibilityVersion() {
-        return MINOR_VERSION >= 8;
-    }
+    private static boolean isVisibilityVersion() { return PacketAccessor.MINOR_VERSION >= 8; }
 
-    private static Field getNMS(String path) throws Exception {
-        Field field = packetClass.getDeclaredField(path);
+    private static Field getNMS(final String path) throws Exception {
+        final Field field = PacketAccessor.packetClass.getDeclaredField(path);
         field.setAccessible(true);
         return field;
     }
 
     // 1.17+
-    private static Field getParamNMS(String path) throws Exception {
-        Field field = packetParamsClass.getDeclaredField(path);
+    private static Field getParamNMS(final String path) throws Exception {
+        final Field field = PacketAccessor.packetParamsClass.getDeclaredField(path);
         field.setAccessible(true);
         return field;
     }
 
+    @SuppressWarnings("deprecation")
     static Object createPacket() {
         try {
-            if (!isParamsVersion()) {
-                return packetClass.newInstance();
+            if (!PacketAccessor.isParamsVersion()) {
+                return PacketAccessor.packetClass.newInstance();
             } else {
-                return ALLOCATE_INSTANCE.invoke(UNSAFE, packetClass);
+                return PacketAccessor.ALLOCATE_INSTANCE.invoke(PacketAccessor.UNSAFE, PacketAccessor.packetClass);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -195,29 +216,29 @@ class PacketAccessor {
 
     static Object createPacketParams() {
         try {
-            if (!isParamsVersion()) {
+            if (!PacketAccessor.isParamsVersion()) {
                 return null;
             } else {
-                return ALLOCATE_INSTANCE.invoke(UNSAFE, packetParamsClass);
+                return PacketAccessor.ALLOCATE_INSTANCE.invoke(PacketAccessor.UNSAFE, PacketAccessor.packetParamsClass);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    static void sendPacket(Collection<? extends Player> players, Object packet) {
-        for (Player player : players) {
-            sendPacket(player, packet);
+    static void sendPacket(final Collection<? extends Player> players, final Object packet) {
+        for (final Player player : players) {
+            PacketAccessor.sendPacket(player, packet);
         }
     }
 
-    static void sendPacket(Player player, Object packet) {
+    static void sendPacket(final Player player, final Object packet) {
         try {
-            Object nmsPlayer = getHandle.invoke(player);
-            Object connection = playerConnection.get(nmsPlayer);
-            sendPacket.invoke(connection, packet);
-        } catch (Exception e) {
+            final Object nmsPlayer = PacketAccessor.getHandle.invoke(player);
+            final Object connection = PacketAccessor.playerConnection.get(nmsPlayer);
+            PacketAccessor.sendPacket.invoke(connection, packet);
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }

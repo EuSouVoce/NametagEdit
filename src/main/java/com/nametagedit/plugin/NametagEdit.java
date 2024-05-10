@@ -14,10 +14,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 
 /**
- * TODO:
- * - Better uniform message format + more messages
- * - Code cleanup
- * - Add language support
+ * TODO: - Better uniform message format + more messages - Code cleanup - Add
+ * language support
  */
 @Getter
 public class NametagEdit extends JavaPlugin {
@@ -30,86 +28,83 @@ public class NametagEdit extends JavaPlugin {
     private NametagManager manager;
     private VersionChecker.BukkitVersion version;
 
-    public static INametagApi getApi() {
-        return api;
-    }
+    public static INametagApi getApi() { return NametagEdit.api; }
 
     @Override
     public void onEnable() {
-        testCompat();
-        if (!isEnabled()) return;
+        this.testCompat();
+        if (!this.isEnabled())
+            return;
 
-        instance = this;
+        NametagEdit.instance = this;
 
-        version = VersionChecker.getBukkitVersion();
+        this.version = VersionChecker.getBukkitVersion();
 
-        getLogger().info("Successfully loaded using bukkit version: " + version.name());
+        this.getLogger().info("Successfully loaded using bukkit version: " + this.version.name());
 
-        manager = new NametagManager(this);
-        handler = new NametagHandler(this, manager);
+        this.manager = new NametagManager(this);
+        this.handler = new NametagHandler(this, this.manager);
 
-        PluginManager pluginManager = Bukkit.getPluginManager();
+        final PluginManager pluginManager = Bukkit.getPluginManager();
 
-        if (checkShouldRegister("zPermissions")) {
-            pluginManager.registerEvents(new HookZPermissions(handler), this);
-        } else if (checkShouldRegister("PermissionsEx")) {
-            pluginManager.registerEvents(new HookPermissionsEX(handler), this);
-        } else if (checkShouldRegister("GroupManager")) {
-            pluginManager.registerEvents(new HookGroupManager(handler), this);
-        } else if (checkShouldRegister("LuckPerms")) {
-            pluginManager.registerEvents(new HookLuckPerms(handler), this);
+        if (this.checkShouldRegister("zPermissions")) {
+            pluginManager.registerEvents(new HookZPermissions(this.handler), this);
+        } else if (this.checkShouldRegister("PermissionsEx")) {
+            pluginManager.registerEvents(new HookPermissionsEX(this.handler), this);
+        } else if (this.checkShouldRegister("GroupManager")) {
+            pluginManager.registerEvents(new HookGroupManager(this.handler), this);
+        } else if (this.checkShouldRegister("LuckPerms")) {
+            pluginManager.registerEvents(new HookLuckPerms(this.handler), this);
         }
 
         if (pluginManager.getPlugin("LibsDisguises") != null) {
             pluginManager.registerEvents(new HookLibsDisguise(this), this);
         }
         if (pluginManager.getPlugin("Guilds") != null) {
-            pluginManager.registerEvents(new HookGuilds(handler), this);
+            pluginManager.registerEvents(new HookGuilds(this.handler), this);
         }
 
-        getCommand("ne").setExecutor(new NametagCommand(handler));
+        this.getCommand("ne").setExecutor(new NametagCommand(this.handler));
 
-        if (api == null) {
-            api = new NametagAPI(handler, manager);
+        if (NametagEdit.api == null) {
+            NametagEdit.api = new NametagAPI(this.handler, this.manager);
         }
 
-        if (version.name().startsWith("v1_8_"))
+        if (this.version.name().startsWith("v1_8_"))
             new InvisibilityTask().runTaskTimerAsynchronously(this, 100L, 20L);
     }
 
-    public static NametagEdit getInstance(){
-        return instance;
-    }
+    public static NametagEdit getInstance() { return NametagEdit.instance; }
 
     @Override
     public void onDisable() {
-        manager.reset();
-        handler.getAbstractConfig().shutdown();
+        this.manager.reset();
+        this.handler.getAbstractConfig().shutdown();
     }
 
-    void debug(String message) {
-        if (handler != null && handler.debug()) {
-            getLogger().info("[DEBUG] " + message);
+    void debug(final String message) {
+        if (this.handler != null && this.handler.debug()) {
+            this.getLogger().info("[DEBUG] " + message);
         }
     }
 
-    private boolean checkShouldRegister(String plugin) {
-        if (Bukkit.getPluginManager().getPlugin(plugin) == null) return false;
-        getLogger().info("Found " + plugin + "! Hooking in.");
+    private boolean checkShouldRegister(final String plugin) {
+        if (Bukkit.getPluginManager().getPlugin(plugin) == null)
+            return false;
+        this.getLogger().info("Found " + plugin + "! Hooking in.");
         return true;
     }
 
     private void testCompat() {
-        PacketWrapper wrapper = new PacketWrapper("TEST", "&f", "", 0, new ArrayList<>(), true);
+        final PacketWrapper wrapper = new PacketWrapper("TEST", "&f", "", 0, new ArrayList<>(), true);
         wrapper.send();
-        if (wrapper.error == null) return;
+        if (wrapper.error == null)
+            return;
         Bukkit.getPluginManager().disablePlugin(this);
-        getLogger().severe("\n------------------------------------------------------\n" +
-                "[WARNING] NametagEdit v" + getDescription().getVersion() + " Failed to load! [WARNING]" +
-                "\n------------------------------------------------------" +
-                "\nThis might be an issue with reflection. REPORT this:\n> " +
-                wrapper.error +
-                "\nThe plugin will now self destruct.\n------------------------------------------------------");
+        this.getLogger().severe("\n------------------------------------------------------\n" + "[WARNING] NametagEdit v"
+                + this.getDescription().getVersion() + " Failed to load! [WARNING]"
+                + "\n------------------------------------------------------" + "\nThis might be an issue with reflection. REPORT this:\n> "
+                + wrapper.error + "\nThe plugin will now self destruct.\n------------------------------------------------------");
     }
 
 }

@@ -8,21 +8,16 @@ import lombok.Getter;
 enum PacketData {
 
     v1_7("e", "c", "d", "a", "f", "g", "b", "NA", "NA", "NA", "NA"),
-    cauldron("field_149317_e", "field_149319_c", "field_149316_d", "field_149320_a",
-            "field_149314_f", "field_149315_g", "field_149318_b", "NA", "NA", "NA", "NA"),
-    v1_8("g", "c", "d", "a", "h", "i", "b", "NA", "NA", "e", "NA"),
-    v1_9("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"),
-    v1_10("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"),
-    v1_11("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"),
-    v1_12("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"),
-    v1_13("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"),
-    v1_14("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"),
-    v1_15("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"),
-    v1_16("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"),
-    v1_17("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
-    v1_18("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
-    v1_19("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
-    v1_20("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k");
+    cauldron("field_149317_e", "field_149319_c", "field_149316_d", "field_149320_a", "field_149314_f", "field_149315_g", "field_149318_b",
+            "NA", "NA", "NA", "NA"),
+    v1_8("g", "c", "d", "a", "h", "i", "b", "NA", "NA", "e", "NA"), v1_9("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"),
+    v1_10("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"), v1_11("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"),
+    v1_12("h", "c", "d", "a", "i", "j", "b", "NA", "f", "e", "NA"), v1_13("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"),
+    v1_14("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"), v1_15("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"),
+    v1_16("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"), v1_17("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
+    v1_18("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"), v1_19("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
+    v1_20("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"), v1_20_6("players", "METHOD_REMOVE", "METHOD_CHANGE", "name", "method",
+            "MAX_COLLISION_LENGTH", "METHOD_ADD", "MAX_VISIBILITY_LENGTH", "METHOD_LEAVE", "METHOD_JOIN", "parameters");
 
     private final String members;
     private final String prefix;
