@@ -1,5 +1,5 @@
 # NametagEdit
-
+## **IMPORTANT**: This fork will work only with paper forks!
 [![Dev Builds](https://img.shields.io/badge/Jenkins-Development%20Builds-lightgrey.svg)](https://ci.nametagedit.com/job/NametagEdit)
 [![Support](https://img.shields.io/badge/Minecraft-1.7--1.19-green.svg)](documentation/Support)
 [![Spigot](https://img.shields.io/badge/Spigot-Project%20Page-yellow.svg)](https://www.spigotmc.org/resources/nametagedit.3836/)
