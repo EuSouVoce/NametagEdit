@@ -12,9 +12,13 @@ import java.util.stream.Stream;
 
 class PacketAccessor {
 
-    protected static String VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+    protected static String VERSION;
 
     static {
+        try {
+            PacketAccessor.VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+        } catch (final Exception ignored) {
+        }
         if (Bukkit.getBukkitVersion().contains("1.20.6")) {
             PacketAccessor.VERSION = "v1_20_R6";
         }
