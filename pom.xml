@@ -9,12 +9,18 @@
     <packaging>jar</packaging>
     <name>NametagEdit</name>
     <url>https://maven.apache.org</url>
+    <pluginRepositories>
+        <pluginRepository>
+        <id>bytecode.space</id>
+        <url>https://repo.bytecode.space/repository/maven-public/</url>
+        </pluginRepository>
+        </pluginRepositories>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spigot.version>1.20.6-R0.1-SNAPSHOT</spigot.version>
     </properties>
     <dependencies>
-        <!--Spigot -->
+        <!--Spigot 
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -25,6 +31,13 @@
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot</artifactId>
             <version>${spigot.version}</version>
+            <scope>provided</scope>
+        </dependency>-->
+
+        <dependency>
+            <groupId>ca.bkaw</groupId>
+            <artifactId>paper-nms</artifactId>
+            <version>1.20.6-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!-- LuckPerms -->
@@ -168,6 +181,19 @@
             </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>ca.bkaw</groupId>
+                <artifactId>paper-nms-maven-plugin</artifactId>
+                <version>1.4.3</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>remap</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Filter values in resources -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

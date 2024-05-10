@@ -72,7 +72,13 @@ class PacketAccessor {
             if (PacketAccessor.legacyVersions.contains(PacketAccessor.VERSION))
                 PacketAccessor.LEGACY_SERVER = true;
 
-            final Class<?> typeCraftPlayer = Class.forName("org.bukkit.craftbukkit." + PacketAccessor.VERSION + ".entity.CraftPlayer");
+            Class<?> typeCraftPlayer;
+            if (PacketAccessor.VERSION == "v1_20_R6") {
+                typeCraftPlayer = Class.forName("org.bukkit.craftbukkit.entity.CraftPlayer");
+            } else {
+                typeCraftPlayer = Class.forName("org.bukkit.craftbukkit." + PacketAccessor.VERSION + ".entity.CraftPlayer");
+            }
+
             PacketAccessor.getHandle = typeCraftPlayer.getMethod("getHandle");
 
             if (PacketAccessor.CAULDRON_SERVER) {
