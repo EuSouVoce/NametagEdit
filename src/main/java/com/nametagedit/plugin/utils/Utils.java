@@ -22,6 +22,7 @@ import org.bukkit.plugin.Plugin;
 
 import com.nametagedit.plugin.packets.VersionChecker;
 
+@SuppressWarnings("deprecation")
 public class Utils {
 
     private static final Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");

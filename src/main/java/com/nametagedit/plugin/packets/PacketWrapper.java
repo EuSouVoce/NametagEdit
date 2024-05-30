@@ -13,7 +13,7 @@ import org.bukkit.entity.Player;
 import com.nametagedit.plugin.NametagHandler;
 import com.nametagedit.plugin.utils.Utils;
 
-@SuppressWarnings({ "unchecked", "rawtypes" })
+@SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
 public class PacketWrapper {
 
     public String error;

@@ -35,7 +35,6 @@ public class NametagManager {
      * Adds a player to a FakeTeam. If they are already on this team, we do NOT
      * change that.
      */
-    @SuppressWarnings("deprecation")
     private void addPlayerToTeam(final String player, final String prefix, final String suffix, final int sortPriority,
             final boolean playerTag, final boolean visible) {
         final FakeTeam previous = this.getFakeTeam(player);
@@ -84,7 +83,6 @@ public class NametagManager {
 
     public FakeTeam reset(final String player) { return this.reset(player, this.decache(player)); }
 
-    @SuppressWarnings("deprecation")
     private FakeTeam reset(final String player, final FakeTeam fakeTeam) {
         if (fakeTeam != null && fakeTeam.getMembers().remove(player)) {
             boolean delete;

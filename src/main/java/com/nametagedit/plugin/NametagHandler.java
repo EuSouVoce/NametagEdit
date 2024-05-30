@@ -43,6 +43,7 @@ import me.clip.placeholderapi.PlaceholderAPIPlugin;
 
 @Getter
 @Setter
+@SuppressWarnings("deprecation")
 public class NametagHandler implements Listener {
 
     // Multiple threads access resources. We need to make sure we avoid concurrency

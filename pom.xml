@@ -9,6 +9,14 @@
     <packaging>jar</packaging>
     <name>NametagEdit</name>
     <url>https://maven.apache.org</url>
+
+    <distributionManagement>
+        <repository>
+            <id>repo-imperiogames</id>
+            <url>http://repo.imperio.games/public</url>
+        </repository>
+    </distributionManagement>
+
     <pluginRepositories>
         <pluginRepository>
         <id>bytecode.space</id>
@@ -184,15 +192,7 @@
             <plugin>
                 <groupId>ca.bkaw</groupId>
                 <artifactId>paper-nms-maven-plugin</artifactId>
-                <version>1.4.3</version>
-                <executions>
-                    <execution>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>remap</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <version>1.4.4</version>
             </plugin>
             <!-- Filter values in resources -->
             <plugin>

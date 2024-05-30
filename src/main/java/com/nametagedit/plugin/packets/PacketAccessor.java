@@ -1,17 +1,14 @@
 package com.nametagedit.plugin.packets;
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
-import com.google.gson.Gson;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 class PacketAccessor {
 
