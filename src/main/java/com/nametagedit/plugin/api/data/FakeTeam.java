@@ -3,7 +3,7 @@ package com.nametagedit.plugin.api.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nametagedit.plugin.packets.VersionChecker;
+import com.cryptomorin.xseries.reflection.XReflection;
 import com.nametagedit.plugin.utils.Utils;
 
 import lombok.Data;
@@ -39,17 +39,9 @@ public class FakeTeam {
         }
         this.name = generatedName;
 
-        switch (VersionChecker.getBukkitVersion()) {
-        case v1_8_R1:
-        case v1_8_R2:
-        case v1_8_R3:
-        case v1_9_R1:
-        case v1_9_R2:
-        case v1_10_R1:
-        case v1_11_R1:
-        case v1_12_R1:
+        if (XReflection.MINOR_NUMBER <= 12) {
             this.name = this.name.length() > 16 ? this.name.substring(0, 16) : this.name;
-        default:
+        } else {
             this.name = this.name.length() > 256 ? this.name.substring(0, 256) : this.name;
         }
 

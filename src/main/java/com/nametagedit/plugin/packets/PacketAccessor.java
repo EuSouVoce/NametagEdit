@@ -10,6 +10,8 @@ import java.util.stream.Stream;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import com.cryptomorin.xseries.reflection.XReflection;
+
 class PacketAccessor {
 
     protected static String VERSION;
@@ -19,9 +21,8 @@ class PacketAccessor {
             PacketAccessor.VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         } catch (final Exception ignored) {
         }
-        if (Bukkit.getBukkitVersion().contains("1.20.6")) {
-            PacketAccessor.VERSION = "v1_20_R6";
-        }
+        PacketAccessor.VERSION = "v" + XReflection.MAJOR_NUMBER + "_" + XReflection.MINOR_NUMBER + "_R" + XReflection.PATCH_NUMBER;
+
     }
     protected static final int MINOR_VERSION = Integer.parseInt(PacketAccessor.VERSION.split("_")[1]);
 
@@ -73,9 +74,9 @@ class PacketAccessor {
                 PacketAccessor.LEGACY_SERVER = true;
 
             Class<?> typeCraftPlayer;
-            if (PacketAccessor.VERSION == "v1_20_R6") {
+            try {
                 typeCraftPlayer = Class.forName("org.bukkit.craftbukkit.entity.CraftPlayer");
-            } else {
+            } catch (final Exception e) {
                 typeCraftPlayer = Class.forName("org.bukkit.craftbukkit." + PacketAccessor.VERSION + ".entity.CraftPlayer");
             }
 
@@ -96,41 +97,47 @@ class PacketAccessor {
                 PacketAccessor.playerConnection = typeNMSPlayer.getField("playerConnection");
                 PacketAccessor.sendPacket = typePlayerConnection.getMethod("sendPacket",
                         Class.forName("net.minecraft.server." + PacketAccessor.VERSION + ".Packet"));
-            } else if (PacketAccessor.VERSION == "v1_20_R6") {
-                PacketAccessor.packetClass = Class.forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket");
-                PacketAccessor.packetParamsClass = Class
-                        .forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket$Parameters");
-                final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.level.ServerPlayer");
-                final Class<?> typePlayerConnection = Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl");
-                PacketAccessor.playerConnection = typeNMSPlayer.getField("connection");
-                final Class<?>[] sendPacketParameters = new Class[] { Class.forName("net.minecraft.network.protocol.Packet") };
-                // 1.20.2+ priority to sending
-                PacketAccessor.sendPacket = Stream
-                        .concat(Arrays.stream(typePlayerConnection.getSuperclass().getMethods()),
-                                Arrays.stream(typePlayerConnection.getMethods()))
-                        .filter(method -> Arrays.equals(method.getParameterTypes(), sendPacketParameters)).findFirst()
-                        .orElseThrow(NoSuchMethodException::new);
             } else {
-                // 1.17+
-                PacketAccessor.packetClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam");
-                PacketAccessor.packetParamsClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam$b");
-                final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.level.EntityPlayer");
-                final Class<?> typePlayerConnection = Class.forName("net.minecraft.server.network.PlayerConnection");
-                if (PacketAccessor.MINOR_VERSION >= 20) {
-                    // 1.20
-                    PacketAccessor.playerConnection = typeNMSPlayer.getField("c");
-                } else {
-                    // 1.17-1.19
-                    PacketAccessor.playerConnection = typeNMSPlayer.getField("b");
+
+                try {
+                    PacketAccessor.packetClass = Class.forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket");
+                    PacketAccessor.packetParamsClass = Class
+                            .forName("net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket$Parameters");
+                    final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.level.ServerPlayer");
+                    final Class<?> typePlayerConnection = Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl");
+                    PacketAccessor.playerConnection = typeNMSPlayer.getField("connection");
+                    final Class<?>[] sendPacketParameters = new Class[] { Class.forName("net.minecraft.network.protocol.Packet") };
+                    // 1.20.2+ priority to sending
+                    PacketAccessor.sendPacket = Stream
+                            .concat(Arrays.stream(typePlayerConnection.getSuperclass().getMethods()),
+                                    Arrays.stream(typePlayerConnection.getMethods()))
+                            .filter(method -> Arrays.equals(method.getParameterTypes(), sendPacketParameters)).findFirst()
+                            .orElseThrow(NoSuchMethodException::new);
+
+                } catch (final Exception ignored) {
+
+                    // 1.17+
+                    PacketAccessor.packetClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam");
+                    PacketAccessor.packetParamsClass = Class.forName("net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam$b");
+                    final Class<?> typeNMSPlayer = Class.forName("net.minecraft.server.level.EntityPlayer");
+                    final Class<?> typePlayerConnection = Class.forName("net.minecraft.server.network.PlayerConnection");
+                    if (PacketAccessor.MINOR_VERSION >= 20) {
+                        // 1.20
+                        PacketAccessor.playerConnection = typeNMSPlayer.getField("c");
+                    } else {
+                        // 1.17-1.19
+                        PacketAccessor.playerConnection = typeNMSPlayer.getField("b");
+                    }
+                    final Class<?>[] sendPacketParameters = new Class[] { Class.forName("net.minecraft.network.protocol.Packet") };
+                    PacketAccessor.sendPacket = Stream.concat(Arrays.stream(typePlayerConnection.getSuperclass().getMethods()), // 1.20.2+
+                                                                                                                                // priority
+                                                                                                                                // to
+                                                                                                                                // packet
+                            // sending
+                            Arrays.stream(typePlayerConnection.getMethods()))
+                            .filter(method -> Arrays.equals(method.getParameterTypes(), sendPacketParameters)).findFirst()
+                            .orElseThrow(NoSuchMethodException::new);
                 }
-                final Class<?>[] sendPacketParameters = new Class[] { Class.forName("net.minecraft.network.protocol.Packet") };
-                PacketAccessor.sendPacket = Stream.concat(Arrays.stream(typePlayerConnection.getSuperclass().getMethods()), // 1.20.2+
-                                                                                                                            // priority to
-                                                                                                                            // packet
-                        // sending
-                        Arrays.stream(typePlayerConnection.getMethods()))
-                        .filter(method -> Arrays.equals(method.getParameterTypes(), sendPacketParameters)).findFirst()
-                        .orElseThrow(NoSuchMethodException::new);
             }
 
             PacketData currentVersion = null;

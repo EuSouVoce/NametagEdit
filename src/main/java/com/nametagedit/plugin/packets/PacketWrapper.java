@@ -32,17 +32,16 @@ public class PacketWrapper {
                     PacketWrapper.typeEnumChatFormat = (Class<? extends Enum>) Class
                             .forName("net.minecraft.server." + PacketAccessor.VERSION + ".EnumChatFormat");
                 } else {
-                    if (PacketAccessor.VERSION == "v1_20_R6") {
+                    try {
                         PacketWrapper.typeEnumChatFormat = (Class<? extends Enum>) Class.forName("net.minecraft.ChatFormatting");
-                    } else {
-                        // 1.17+
+                    } catch (final ClassNotFoundException e) {
                         PacketWrapper.typeEnumChatFormat = (Class<? extends Enum>) Class.forName("net.minecraft.EnumChatFormat");
                     }
                 }
                 Class<?> typeCraftChatMessage;
-                if (PacketAccessor.VERSION == "v1_20_R6") {
+                try {
                     typeCraftChatMessage = Class.forName("org.bukkit.craftbukkit.util.CraftChatMessage");
-                } else {
+                } catch (final ClassNotFoundException e) {
                     typeCraftChatMessage = Class.forName("org.bukkit.craftbukkit." + PacketAccessor.VERSION + ".util.CraftChatMessage");
                 }
                 PacketWrapper.CraftChatMessage = typeCraftChatMessage.getMethod("fromString", String.class);

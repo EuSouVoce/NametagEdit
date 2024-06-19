@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.nametagedit</groupId>
     <artifactId>nametagedit</artifactId>
-    <version>4.6.0</version>
+    <version>4.7.0</version>
     <packaging>jar</packaging>
     <name>NametagEdit</name>
     <url>https://maven.apache.org</url>
@@ -19,33 +19,19 @@
 
     <pluginRepositories>
         <pluginRepository>
-        <id>bytecode.space</id>
-        <url>https://repo.bytecode.space/repository/maven-public/</url>
+            <id>bytecode.space</id>
+            <url>https://repo.bytecode.space/repository/maven-public/</url>
         </pluginRepository>
-        </pluginRepositories>
+    </pluginRepositories>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spigot.version>1.20.6-R0.1-SNAPSHOT</spigot.version>
     </properties>
     <dependencies>
-        <!--Spigot 
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>${spigot.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot</artifactId>
-            <version>${spigot.version}</version>
-            <scope>provided</scope>
-        </dependency>-->
-
         <dependency>
             <groupId>ca.bkaw</groupId>
             <artifactId>paper-nms</artifactId>
-            <version>1.20.6-SNAPSHOT</version>
+            <version>1.21-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!-- LuckPerms -->
@@ -79,7 +65,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.22</version>
+            <version>1.18.32</version>
             <scope>provided</scope>
         </dependency>
         <!-- Google Guava API -->
@@ -140,8 +126,19 @@
             <artifactId>acf-paper</artifactId>
             <version>0.5.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.cryptomorin</groupId>
+            <artifactId>XSeries</artifactId>
+            <version>11.0.0</version>
+        </dependency>
     </dependencies>
     <repositories>
+
+        <repository>
+            <id>repo-imperiogames</id>
+            <url>https://repo.imperio.games/public</url>
+        </repository>
+
         <!-- CodeMC -->
         <repository>
             <id>nms-repo</id>
@@ -189,11 +186,11 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
+            <!-- <plugin>
                 <groupId>ca.bkaw</groupId>
                 <artifactId>paper-nms-maven-plugin</artifactId>
                 <version>1.4.4</version>
-            </plugin>
+            </plugin> -->
             <!-- Filter values in resources -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -214,7 +211,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -224,12 +221,30 @@
                         <configuration>
                             <minimizeJar>true</minimizeJar>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.cryptomorin.xseries</pattern>
+                                    <!-- Be sure to change the package below -->
+                                    <shadedPattern>com.nametagedit.xseries</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>com/cryptomorin/xseries/XBiome*</exclude>
+                                        <exclude>com/cryptomorin/xseries/NoteBlockMusic*</exclude>
+                                        <exclude>com/cryptomorin/xseries/SkullCacheListener*</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <artifactSet>
                                 <includes>
                                     <include>org.slf4j:*</include>
                                     <include>com.zaxxer:*</include>
                                     <include>org.bstats.bStats-Metrics:*</include>
                                     <include>co.aikar:*</include>
+                                    <include>com.github.cryptomorin:*</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
@@ -254,13 +269,13 @@
                 <version>3.4.1</version>
                 <configuration>
                     <archive>
-                      <manifestEntries>
-                        <paperweight-mappings-namespace>mojang</paperweight-mappings-namespace>
-                        <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                      </manifestEntries>
+                        <manifestEntries>
+                            <paperweight-mappings-namespace>mojang</paperweight-mappings-namespace>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifestEntries>
                     </archive>
                     <outputDirectory>C:/Users/EuSouVoce/Desktop/testserver/plugins</outputDirectory>
-                  </configuration>
+                </configuration>
             </plugin>
         </plugins>
     </build>

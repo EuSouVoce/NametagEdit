@@ -20,7 +20,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import com.nametagedit.plugin.packets.VersionChecker;
+import com.cryptomorin.xseries.reflection.XReflection;
 
 @SuppressWarnings("deprecation")
 public class Utils {
@@ -38,12 +38,9 @@ public class Utils {
     public static String format(final String input, final boolean limitChars) {
         final String colored = Utils.color(input);
 
-        return switch (VersionChecker.getBukkitVersion()) {
-        case v1_8_R1, v1_8_R2, v1_8_R3, v1_9_R1, v1_9_R2, v1_10_R1, v1_11_R1, v1_12_R1 -> limitChars && colored.length() > 16
-                ? colored.substring(0, 16)
-                : colored;
-        default -> limitChars && colored.length() > 256 ? colored.substring(0, 256) : colored;
-        };
+        return (XReflection.MINOR_NUMBER <= 12) ? (limitChars && colored.length() > 16 ? colored.substring(0, 16) : colored)
+                : limitChars && colored.length() > 256 ? colored.substring(0, 256) : colored;
+
     }
 
     public static String color(String text) {
@@ -52,7 +49,7 @@ public class Utils {
 
         text = ChatColor.translateAlternateColorCodes('&', text);
 
-        if (VersionChecker.canHex()) {
+        if (XReflection.supports(16)) {
             final char colorChar = ChatColor.COLOR_CHAR;
 
             final Matcher matcher = Utils.hexPattern.matcher(text);

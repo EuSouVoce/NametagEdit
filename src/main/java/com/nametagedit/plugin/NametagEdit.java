@@ -1,17 +1,24 @@
 package com.nametagedit.plugin;
 
-import com.nametagedit.plugin.api.INametagApi;
-import com.nametagedit.plugin.api.NametagAPI;
-import com.nametagedit.plugin.hooks.*;
-import com.nametagedit.plugin.invisibility.InvisibilityTask;
-import com.nametagedit.plugin.packets.PacketWrapper;
-import com.nametagedit.plugin.packets.VersionChecker;
-import lombok.Getter;
+import java.util.ArrayList;
+
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
+import com.cryptomorin.xseries.reflection.XReflection;
+import com.nametagedit.plugin.api.INametagApi;
+import com.nametagedit.plugin.api.NametagAPI;
+import com.nametagedit.plugin.hooks.HookGroupManager;
+import com.nametagedit.plugin.hooks.HookGuilds;
+import com.nametagedit.plugin.hooks.HookLibsDisguise;
+import com.nametagedit.plugin.hooks.HookLuckPerms;
+import com.nametagedit.plugin.hooks.HookPermissionsEX;
+import com.nametagedit.plugin.hooks.HookZPermissions;
+import com.nametagedit.plugin.invisibility.InvisibilityTask;
+import com.nametagedit.plugin.packets.PacketWrapper;
+
+import lombok.Getter;
 
 /**
  * TODO: - Better uniform message format + more messages - Code cleanup - Add
@@ -26,7 +33,6 @@ public class NametagEdit extends JavaPlugin {
 
     private NametagHandler handler;
     private NametagManager manager;
-    private VersionChecker.BukkitVersion version;
 
     public static INametagApi getApi() { return NametagEdit.api; }
 
@@ -38,9 +44,7 @@ public class NametagEdit extends JavaPlugin {
 
         NametagEdit.instance = this;
 
-        this.version = VersionChecker.getBukkitVersion();
-
-        this.getLogger().info("Successfully loaded using bukkit version: " + this.version.name());
+        this.getLogger().info("Successfully loaded using bukkit version: " + Bukkit.getBukkitVersion());
 
         this.manager = new NametagManager(this);
         this.handler = new NametagHandler(this, this.manager);
@@ -70,7 +74,7 @@ public class NametagEdit extends JavaPlugin {
             NametagEdit.api = new NametagAPI(this.handler, this.manager);
         }
 
-        if (this.version.name().startsWith("v1_8_"))
+        if (XReflection.MINOR_NUMBER == 8)
             new InvisibilityTask().runTaskTimerAsynchronously(this, 100L, 20L);
     }
 

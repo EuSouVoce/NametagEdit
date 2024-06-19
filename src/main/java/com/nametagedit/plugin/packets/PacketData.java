@@ -17,8 +17,12 @@ enum PacketData {
     v1_16("h", "c", "d", "a", "i", "j", "b", "g", "f", "e", "NA"), v1_17("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
     v1_18("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"), v1_19("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
     v1_20("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
-    v1_20_6_SPIGOT_MAPPINGS("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"), v1_20_6("players", "playerPrefix", "playerSuffix",
-            "name", "method", "options", "displayName", "color", "collisionRule", "nametagVisibility", "parameters");
+    v1_20_6_SPIGOT_MAPPINGS("j", "b", "c", "i", "h", "g", "a", "f", "e", "d", "k"),
+    v1_20_6("players", "playerPrefix", "playerSuffix", "name", "method", "options", "displayName", "color", "collisionRule",
+            "nametagVisibility", "parameters"),
+    v1_21("players", "playerPrefix", "playerSuffix", "name", "method", "options", "displayName", "color", "collisionRule",
+            "nametagVisibility", "parameters");
+    ;
 
     private final String members;
     private final String prefix;
